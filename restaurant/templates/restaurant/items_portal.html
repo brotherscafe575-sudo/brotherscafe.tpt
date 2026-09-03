@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Menu Manager — Brothers Cafe</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#0f172a;--accent:#f97316;--accent2:#fb923c;
+  --green:#22c55e;--red:#ef4444;--blue:#3b82f6;--purple:#a855f7;
+  --bg:#f8fafc;--card:#fff;--border:#e2e8f0;
+  --text:#0f172a;--sub:#64748b;--muted:#94a3b8;
+  --radius:12px;--shadow:0 1px 8px rgba(15,23,42,.07);
+  --shadow-lg:0 8px 32px rgba(15,23,42,.12);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── TOPBAR ── */
+.topbar{
+  background:var(--primary);color:#fff;padding:0 28px;height:62px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:200;
+  box-shadow:0 2px 16px rgba(0,0,0,.25);
+}
+.topbar-brand{display:flex;align-items:center;gap:14px}
+.brand-icon{width:36px;height:36px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.brand-name{font-size:17px;font-weight:800;letter-spacing:-.3px}
+.brand-name span{color:var(--accent)}
+.brand-tag{background:rgba(249,115,22,.2);color:var(--accent);font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.8px;border:1px solid rgba(249,115,22,.3)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.btn-tb{padding:8px 18px;border-radius:9px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:inherit;transition:.15s;display:flex;align-items:center;gap:7px}
+.btn-tb.ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.15)}
+.btn-tb.ghost:hover{background:rgba(255,255,255,.18)}
+.btn-tb.primary{background:var(--accent);color:#fff}
+.btn-tb.primary:hover{background:var(--accent2)}
+
+/* ── LAYOUT ── */
+.layout{display:flex;min-height:calc(100vh - 62px)}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:230px;background:#fff;border-right:1px solid var(--border);
+  position:sticky;top:62px;height:calc(100vh - 62px);overflow-y:auto;flex-shrink:0;
+}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px}
+.sidebar-inner{padding:16px 0}
+.sidebar-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1.2px;padding:0 18px 10px;text-transform:uppercase}
+.cat-link{
+  display:flex;align-items:center;gap:10px;padding:10px 18px;
+  cursor:pointer;border-left:3px solid transparent;transition:all .15s;
+  text-decoration:none;color:var(--text);
+}
+.cat-link:hover{background:#f8fafc;border-left-color:var(--accent)}
+.cat-link.active{background:#fff7ed;border-left-color:var(--accent);color:var(--accent)}
+.cat-link .ci{font-size:17px;width:22px;text-align:center}
+.cat-link .cn{font-size:13px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cat-link .cc{background:#f1f5f9;color:var(--sub);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;flex-shrink:0}
+.cat-link.active .cc{background:var(--accent);color:#fff}
+
+/* ── MAIN ── */
+.main{flex:1;padding:24px 28px;overflow-x:hidden;max-width:100%}
+
+/* ── TOPROW ── */
+.toprow{display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+.search-wrap{flex:1;min-width:240px;position:relative}
+.search-wrap input{
+  width:100%;padding:11px 16px 11px 42px;border:1.5px solid var(--border);
+  border-radius:10px;font-size:14px;font-family:inherit;outline:none;
+  background:#fff;color:var(--text);transition:.2s;
+}
+.search-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(249,115,22,.1)}
+.s-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px}
+.stat-bar{display:flex;gap:8px;flex-wrap:wrap}
+.sstat{
+  background:#fff;border:1.5px solid var(--border);border-radius:9px;
+  padding:7px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px;
+}
+.sstat .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* ── CATEGORY SECTION ── */
+.cat-section{margin-bottom:36px;scroll-margin-top:80px}
+.cat-header{
+  display:flex;align-items:center;gap:14px;margin-bottom:16px;
+  padding:14px 20px;background:#fff;border-radius:var(--radius);
+  border:1.5px solid var(--border);box-shadow:var(--shadow);
+}
+.cat-emoji{font-size:26px;flex-shrink:0}
+.cat-info{flex:1}
+.cat-info h2{font-size:15px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:8px}
+.cat-info p{font-size:12px;color:var(--sub)}
+.cat-acts{display:flex;gap:8px;flex-shrink:0}
+.btn-ca{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;text-decoration:none;transition:.15s}
+.btn-ca.add-item{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.btn-ca.add-item:hover{background:#dcfce7}
+
+/* ── ITEM GRID ── */
+.item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+
+/* ── ITEM CARD ── */
+.item-card{
+  background:#fff;border-radius:var(--radius);border:1.5px solid var(--border);
+  box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;
+  transition:box-shadow .2s,transform .2s,border-color .2s;
+}
+.item-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);border-color:#fed7aa}
+.item-card.hidden-item{opacity:.5}
+
+/* IMAGE */
+.card-img{position:relative;height:145px;background:#f8fafc;flex-shrink:0;overflow:hidden;cursor:pointer}
+.card-img img{width:100%;height:100%;object-fit:cover;transition:.3s}
+.card-img:hover img{transform:scale(1.04)}
+.img-placeholder{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:12px}
+.img-placeholder .big-icon{font-size:40px;opacity:.5}
+.img-overlay{
+  position:absolute;inset:0;background:rgba(0,0,0,.45);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:.2s;
+}
+.card-img:hover .img-overlay{opacity:1}
+.img-overlay-text{color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px}
+.veg-badge{
+  position:absolute;top:8px;left:8px;width:20px;height:20px;
+  border-radius:4px;border:2px solid;display:flex;align-items:center;justify-content:center;
+  background:#fff;
+}
+.veg-badge::after{content:'';width:9px;height:9px;border-radius:50%}
+.veg-badge.veg{border-color:#22c55e}.veg-badge.veg::after{background:#22c55e}
+.veg-badge.nonveg{border-color:#ef4444}.veg-badge.nonveg::after{background:#ef4444}
+.veg-badge.vegan{border-color:#16a34a}.veg-badge.vegan::after{background:#16a34a}
+.veg-badge.beverage{border-color:#3b82f6}.veg-badge.beverage::after{background:#3b82f6}
+.feat-btn{
+  position:absolute;top:8px;right:8px;background:rgba(0,0,0,.5);
+  color:#fff;font-size:10px;font-weight:700;padding:3px 8px;
+  border-radius:20px;cursor:pointer;border:none;font-family:inherit;transition:.15s;
+}
+.feat-btn:hover,.feat-btn.on{background:#f59e0b}
+
+/* BODY */
+.card-body{padding:12px 14px;flex:1;display:flex;flex-direction:column;gap:8px}
+.item-name{font-size:14px;font-weight:700;line-height:1.3}
+.item-desc{font-size:11px;color:var(--sub);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+.price-row{display:flex;align-items:center;gap:7px;margin-top:2px}
+.rupee{font-size:13px;color:var(--sub);font-weight:600;flex-shrink:0}
+.price-inp{
+  width:82px;padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;
+  font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--accent);outline:none;background:#fff;
+}
+.price-inp:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(249,115,22,.12)}
+.btn-sp{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s}
+.btn-sp:hover{background:var(--accent2)}
+.parcel-note{font-size:10px;color:var(--muted);margin-left:auto;white-space:nowrap;font-style:italic}
+
+.toggle-row{display:flex;gap:6px;flex-wrap:wrap}
+.tpill{
+  display:flex;align-items:center;gap:5px;padding:5px 11px;
+  border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;
+  border:1.5px solid;user-select:none;transition:all .15s;white-space:nowrap;
+}
+.tpill.on.dine{background:#f0fdf4;border-color:#22c55e;color:#166534}
+.tpill.off.dine{background:#f8fafc;border-color:#e2e8f0;color:#94a3b8}
+.tpill.on.tk{background:#eff6ff;border-color:#3b82f6;color:#1d4ed8}
+.tpill.off.tk{background:#f8fafc;border-color:#e2e8f0;color:#94a3b8}
+.tdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.tpill.on.dine .tdot{background:#22c55e}
+.tpill.on.tk .tdot{background:#3b82f6}
+.tpill.off .tdot{background:#cbd5e1}
+
+/* FOOTER */
+.card-footer{border-top:1px solid var(--border);padding:9px 14px;display:flex;justify-content:space-between;align-items:center}
+.btn-edit{background:#eff6ff;color:#1d4ed8;border:none;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;display:flex;align-items:center;gap:4px}
+.btn-edit:hover{background:#dbeafe}
+.btn-del{background:#fef2f2;color:var(--red);border:none;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+.btn-del:hover{background:#fee2e2}
+
+/* EMPTY */
+.empty-cat{padding:36px;text-align:center;color:var(--sub);font-size:13px;border:2px dashed var(--border);border-radius:var(--radius);background:#fafbfc}
+.empty-cat .eicon{font-size:38px;margin-bottom:8px;opacity:.5}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:#0f172a;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transform:translateY(20px);transition:all .25s;pointer-events:none;max-width:300px;display:flex;align-items:center;gap:8px}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{border-left:4px solid var(--green)}
+.toast.error{border-left:4px solid var(--red)}
+.toast.info{border-left:4px solid var(--blue)}
+
+/* ── MODAL BASE ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:18px;width:90%;max-width:520px;box-shadow:0 24px 80px rgba(0,0,0,.25);max-height:92vh;overflow:hidden;display:flex;flex-direction:column}
+.modal-head{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-head h3{font-size:17px;font-weight:800}
+.modal-x{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1;padding:0;transition:.15s}
+.modal-x:hover{color:var(--red)}
+.modal-body{padding:20px 24px;overflow-y:auto;flex:1}
+.modal-body::-webkit-scrollbar{width:4px}
+.modal-body::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px}
+.modal-foot{padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0}
+.btn-m{padding:10px 22px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;border:none;transition:.15s}
+.btn-m.cancel{background:#f1f5f9;color:var(--sub)}
+.btn-m.cancel:hover{background:#e2e8f0}
+.btn-m.danger{background:var(--red);color:#fff}
+.btn-m.danger:hover{background:#dc2626}
+.btn-m.save{background:var(--accent);color:#fff}
+.btn-m.save:hover{background:var(--accent2)}
+.btn-m:disabled{opacity:.55;cursor:not-allowed}
+
+/* FORM */
+.form-grid{display:grid;gap:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:12px;font-weight:700;color:var(--text);letter-spacing:.3px}
+.form-label span{color:var(--red)}
+.form-input,.form-select,.form-textarea{
+  padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;
+  font-size:14px;font-family:inherit;outline:none;color:var(--text);background:#fff;transition:.2s;width:100%;
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(249,115,22,.1)}
+.form-textarea{resize:vertical;min-height:72px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-hint{font-size:11px;color:var(--muted)}
+
+/* IMAGE UPLOAD */
+.img-upload-box{
+  border:2px dashed var(--border);border-radius:10px;padding:20px;
+  text-align:center;cursor:pointer;transition:.2s;position:relative;overflow:hidden;
+  background:#fafbfc;
+}
+.img-upload-box:hover{border-color:var(--accent);background:#fff7ed}
+.img-upload-box.has-img{border-style:solid;border-color:#fed7aa;background:#fff7ed;padding:0}
+.img-upload-box input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.upload-preview{width:100%;height:160px;object-fit:cover;border-radius:8px;display:block}
+.upload-hint{font-size:12px;color:var(--muted);margin-top:6px}
+.upload-icon{font-size:32px;margin-bottom:6px}
+.upload-label{font-size:13px;font-weight:600;color:var(--sub)}
+.img-remove-btn{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:26px;height:26px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
+.img-remove-btn:hover{background:var(--red)}
+
+/* TOGGLE GROUP */
+.toggle-group{display:flex;gap:0;border:1.5px solid var(--border);border-radius:9px;overflow:hidden}
+.tg-btn{flex:1;padding:9px;font-size:12px;font-weight:600;font-family:inherit;border:none;background:#fff;color:var(--sub);cursor:pointer;transition:.15s;text-align:center}
+.tg-btn.active{background:var(--accent);color:#fff}
+
+/* AVAIL TOGGLES */
+.avail-toggles{display:flex;gap:10px}
+.avail-item{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-size:13px;font-weight:600}
+.sw{width:40px;height:22px;border-radius:11px;background:#e2e8f0;position:relative;transition:.2s;flex-shrink:0}
+.sw::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:2px;left:2px;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.sw.on{background:var(--green)}
+.sw.on::after{left:20px}
+
+/* SPINNER */
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* UNAVAIL BADGE */
+.cat-inactive-badge{background:#fef2f2;color:var(--red);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid #fecaca}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{padding:16px}
+  .item-grid{grid-template-columns:1fr 1fr}
+  .toprow{flex-direction:column;align-items:stretch}
+  .cat-acts{display:none}
+}
+@media(max-width:480px){.item-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-icon">☕</div>
+    <div class="brand-name">Brothers<span>Cafe</span></div>
+    <div class="brand-tag">MENU MANAGER</div>
+  </div>
+  <div class="topbar-right">
+    <a href="{% url 'staff_portal' %}" class="btn-tb ghost">← Staff Portal</a>
+    <button class="btn-tb primary" onclick="openAddModal(null)">+ Add Item</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+      <div class="sidebar-label">Categories</div>
+      {% for cat in categories %}
+      <a class="cat-link {% if forloop.first %}active{% endif %}" href="#cat-{{ cat.id }}" onclick="setActive(this)">
+        <span class="ci">{{ cat.icon|default:"🍽️" }}</span>
+        <span class="cn">{{ cat.name }}</span>
+        <span class="cc">{{ cat.items.count }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TOPROW -->
+    <div class="toprow">
+      <div class="search-wrap">
+        <span class="s-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search items by name…" oninput="filterItems(this.value)"/>
+      </div>
+      <div class="stat-bar">
+        <div class="sstat"><span class="dot" style="background:var(--green)"></span><span id="cntActive">–</span> Available</div>
+        <div class="sstat"><span class="dot" style="background:var(--red)"></span><span id="cntHidden">–</span> Hidden</div>
+        <div class="sstat"><span class="dot" style="background:var(--accent)"></span><span id="cntTotal">–</span> Total</div>
+      </div>
+    </div>
+
+    <!-- CATEGORIES -->
+    {% for cat in categories %}
+    <div class="cat-section" id="cat-{{ cat.id }}" data-cat="{{ cat.name|lower }}">
+
+      <div class="cat-header">
+        <div class="cat-emoji">{{ cat.icon|default:"🍽️" }}</div>
+        <div class="cat-info">
+          <h2>
+            {{ cat.name }}
+            {% if not cat.is_active %}<span class="cat-inactive-badge">HIDDEN</span>{% endif %}
+          </h2>
+          <p>{{ cat.items.count }} item{{ cat.items.count|pluralize }}{% if cat.description %} · {{ cat.description }}{% endif %}</p>
+        </div>
+        <div class="cat-acts">
+          <button class="btn-ca add-item" onclick="openAddModal({{ cat.id }})">+ Add Item</button>
+        </div>
+      </div>
+
+      {% if cat.items.count == 0 %}
+      <div class="empty-cat">
+        <div class="eicon">{{ cat.icon|default:"🍽️" }}</div>
+        No items yet in this category.<br>
+        <a href="#" onclick="openAddModal({{ cat.id }});return false;" style="color:var(--accent);font-weight:700;text-decoration:none">+ Add your first item →</a>
+      </div>
+      {% else %}
+      <div class="item-grid" id="grid-{{ cat.id }}">
+        {% for item in cat.items.all %}
+        <div class="item-card {% if not item.is_available_dine_in and not item.is_available_takeaway %}hidden-item{% endif %}"
+             data-name="{{ item.name|lower }}" data-item="{{ item.id }}" id="card-{{ item.id }}">
+
+          <!-- IMAGE -->
+          <div class="card-img" onclick="openEditModal({{ item.id }})">
+            {% if item.image %}
+              <img src="{{ item.image.url }}" alt="{{ item.name }}" loading="lazy" id="img-{{ item.id }}"/>
+            {% else %}
+              <div class="img-placeholder" id="img-{{ item.id }}">
+                <div class="big-icon">{{ cat.icon|default:"🍽️" }}</div>
+                <span>Add photo</span>
+              </div>
+            {% endif %}
+            <div class="veg-badge {{ item.item_type }}"></div>
+            <button class="feat-btn {% if item.is_featured %}on{% endif %}"
+                    onclick="event.stopPropagation();toggleFeatured({{ item.id }},this)">
+              {% if item.is_featured %}⭐ Featured{% else %}☆ Feature{% endif %}
+            </button>
+            <div class="img-overlay"><div class="img-overlay-text">✏️ Edit item</div></div>
+          </div>
+
+          <!-- BODY -->
+          <div class="card-body">
+            <div class="item-name">{{ item.name }}</div>
+            {% if item.description %}<div class="item-desc">{{ item.description }}</div>{% endif %}
+
+            <!-- PRICE -->
+            <div class="price-row">
+              <span class="rupee">₹</span>
+              <input class="price-inp" type="number" value="{{ item.price }}" min="0" step="0.5"
+                     id="price-{{ item.id }}" onkeydown="if(event.key==='Enter')savePrice({{ item.id }})"/>
+              <button class="btn-sp" onclick="savePrice({{ item.id }})">Save</button>
+              {% if item.parcel_charge %}<span class="parcel-note">+₹{{ item.parcel_charge }} parcel</span>{% endif %}
+            </div>
+
+            <!-- AVAILABILITY -->
+            <div class="toggle-row">
+              <div class="tpill {% if item.is_available_dine_in %}on{% else %}off{% endif %} dine"
+                   id="dine-{{ item.id }}" onclick="toggleAvail({{ item.id }},'dine_in',this)">
+                <span class="tdot"></span>🍽️ Dine-in
+              </div>
+              <div class="tpill {% if item.is_available_takeaway %}on{% else %}off{% endif %} tk"
+                   id="tk-{{ item.id }}" onclick="toggleAvail({{ item.id }},'takeaway',this)">
+                <span class="tdot"></span>📦 Takeaway
+              </div>
+            </div>
+          </div>
+
+          <!-- FOOTER -->
+          <div class="card-footer">
+            <button class="btn-edit" onclick="openEditModal({{ item.id }})">✏️ Edit</button>
+            <button class="btn-del" onclick="confirmDel({{ item.id }},'{{ item.name|escapejs }}',this)">🗑 Delete</button>
+          </div>
+
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+  </main>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     ADD / EDIT ITEM MODAL
+══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="itemModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Add New Item</h3>
+      <button class="modal-x" onclick="closeItemModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="itemForm" enctype="multipart/form-data" onsubmit="submitItem(event)">
+        <div class="form-grid">
+
+          <!-- IMAGE UPLOAD -->
+          <div class="form-group">
+            <div class="form-label">Food Image</div>
+            <div class="img-upload-box" id="uploadBox" onclick="document.getElementById('imgFileInput').click()">
+              <input type="file" id="imgFileInput" name="image" accept="image/*" onchange="previewImg(this)"/>
+              <div id="uploadPlaceholder">
+                <div class="upload-icon">📷</div>
+                <div class="upload-label">Click to upload food image</div>
+                <div class="upload-hint">JPG, PNG, WEBP up to 5MB</div>
+              </div>
+              <img id="uploadPreviewImg" class="upload-preview" style="display:none" alt="Preview"/>
+              <button type="button" id="imgRemoveBtn" class="img-remove-btn" style="display:none" onclick="removeImg(event)">×</button>
+            </div>
+          </div>
+
+          <!-- NAME -->
+          <div class="form-group">
+            <label class="form-label">Item Name <span>*</span></label>
+            <input class="form-input" type="text" id="f_name" name="name" placeholder="e.g. Paneer Butter Masala" required/>
+          </div>
+
+          <!-- CATEGORY -->
+          <div class="form-group">
+            <label class="form-label">Category <span>*</span></label>
+            <select class="form-select" id="f_category" name="category_id" required>
+              {% for cat in categories %}
+              <option value="{{ cat.id }}">{{ cat.icon|default:"🍽️" }} {{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- PRICE + PARCEL -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Price (₹) <span>*</span></label>
+              <input class="form-input" type="number" id="f_price" name="price" min="0" step="0.5" placeholder="160" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Parcel Charge (₹)</label>
+              <input class="form-input" type="number" id="f_parcel" name="parcel_charge" min="0" step="0.5" placeholder="25"/>
+            </div>
+          </div>
+
+          <!-- TYPE -->
+          <div class="form-group">
+            <div class="form-label">Type</div>
+            <div class="toggle-group" id="typeGroup">
+              <button type="button" class="tg-btn active" data-val="veg" onclick="setType('veg')">🟢 Veg</button>
+              <button type="button" class="tg-btn" data-val="nonveg" onclick="setType('nonveg')">🔴 Non-Veg</button>
+              <button type="button" class="tg-btn" data-val="vegan" onclick="setType('vegan')">🌿 Vegan</button>
+              <button type="button" class="tg-btn" data-val="beverage" onclick="setType('beverage')">🔵 Beverage</button>
+            </div>
+            <input type="hidden" id="f_type" name="item_type" value="veg"/>
+          </div>
+
+          <!-- DESCRIPTION -->
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="form-textarea" id="f_desc" name="description" placeholder="Short description shown to customers…"></textarea>
+          </div>
+
+          <!-- AVAILABILITY -->
+          <div class="form-group">
+            <div class="form-label">Availability</div>
+            <div class="avail-toggles">
+              <label class="avail-item" onclick="toggleSw('swDine','f_dine')">
+                <div class="sw on" id="swDine"></div>
+                <span>🍽️ Dine-in</span>
+              </label>
+              <label class="avail-item" onclick="toggleSw('swTk','f_tk')">
+                <div class="sw on" id="swTk"></div>
+                <span>📦 Takeaway</span>
+              </label>
+              <label class="avail-item" onclick="toggleSw('swFeat','f_feat')">
+                <div class="sw" id="swFeat"></div>
+                <span>⭐ Featured</span>
+              </label>
+            </div>
+            <input type="hidden" id="f_dine" name="is_available_dine_in" value="true"/>
+            <input type="hidden" id="f_tk" name="is_available_takeaway" value="true"/>
+            <input type="hidden" id="f_feat" name="is_featured" value="false"/>
+          </div>
+
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-m cancel" onclick="closeItemModal()">Cancel</button>
+      <button class="btn-m save" id="saveItemBtn" onclick="document.getElementById('itemForm').requestSubmit()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-overlay" id="delModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head">
+      <h3>🗑 Delete Item</h3>
+      <button class="modal-x" onclick="closeDelModal()">×</button>
+    </div>
+    <div class="modal-body" style="font-size:14px;color:var(--sub);line-height:1.6">
+      Are you sure you want to delete <strong id="delName" style="color:var(--text)"></strong>?<br>
+      <span style="color:var(--red);font-weight:600">This action cannot be undone.</span>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-m cancel" onclick="closeDelModal()">Cancel</button>
+      <button class="btn-m danger" id="confirmDelBtn">Yes, Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CSRF ──
+function csrf(){const m=document.cookie.match('(^|;)\\s*csrftoken\\s*=\\s*([^;]+)');return m?m.pop():'';}
+
+// ── TOAST ──
+function toast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.innerHTML=msg;t.className='toast show '+type;
+  clearTimeout(t._t);t._t=setTimeout(()=>{t.className='toast';},2800);
+}
+
+// ── SIDEBAR ──
+function setActive(el){
+  document.querySelectorAll('.cat-link').forEach(l=>l.classList.remove('active'));
+  el.classList.add('active');
+}
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const id=e.target.id.replace('cat-','');
+      document.querySelectorAll('.cat-link').forEach(l=>l.classList.remove('active'));
+      const lk=document.querySelector(`.cat-link[href="#cat-${id}"]`);
+      if(lk)lk.classList.add('active');
+    }
+  });
+},{threshold:.2,rootMargin:'-62px 0px -60% 0px'});
+document.querySelectorAll('.cat-section').forEach(s=>obs.observe(s));
+
+// ── STATS ──
+function updateStats(){
+  const cards=document.querySelectorAll('.item-card');
+  let act=0,hid=0;
+  cards.forEach(c=>c.classList.contains('hidden-item')?hid++:act++);
+  document.getElementById('cntActive').textContent=act;
+  document.getElementById('cntHidden').textContent=hid;
+  document.getElementById('cntTotal').textContent=cards.length;
+}
+updateStats();
+
+// ── SEARCH ──
+function filterItems(q){
+  q=q.toLowerCase().trim();
+  document.querySelectorAll('.item-card').forEach(c=>{
+    c.style.display=(!q||c.dataset.name.includes(q))?'':'none';
+  });
+}
+
+// ── TOGGLE AVAILABILITY ──
+async function toggleAvail(id,field,pill){
+  try{
+    const r=await fetch(`/staff/items/${id}/toggle/`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},
+      body:JSON.stringify({field})
+    });
+    const d=await r.json();
+    if(!d.success){toast(d.error||'Error','error');return;}
+    const type=field==='dine_in'?'dine':'tk';
+    pill.className=`tpill ${d.value?'on':'off'} ${type}`;
+    const dotEl=pill.querySelector('.tdot');
+    if(dotEl)dotEl.style.background=d.value?(type==='dine'?'#22c55e':'#3b82f6'):'#cbd5e1';
+    const card=pill.closest('.item-card');
+    const dOn=card.querySelector('[id^="dine-"]').classList.contains('on');
+    const tkOn=card.querySelector('[id^="tk-"]').classList.contains('on');
+    card.classList.toggle('hidden-item',!dOn&&!tkOn);
+    updateStats();
+    toast(d.value?'✅ Enabled':'⛔ Disabled');
+  }catch(e){toast('Network error','error');}
+}
+
+// ── TOGGLE FEATURED ──
+async function toggleFeatured(id,btn){
+  try{
+    const r=await fetch(`/staff/items/${id}/toggle/`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},
+      body:JSON.stringify({field:'featured'})
+    });
+    const d=await r.json();
+    if(!d.success){toast(d.error||'Error','error');return;}
+    btn.textContent=d.value?'⭐ Featured':'☆ Feature';
+    btn.classList.toggle('on',d.value);
+    toast(d.value?'⭐ Marked Featured':'Removed from Featured');
+  }catch(e){toast('Network error','error');}
+}
+
+// ── SAVE PRICE ──
+async function savePrice(id){
+  const inp=document.getElementById('price-'+id);
+  const price=parseFloat(inp.value);
+  if(isNaN(price)||price<0){toast('Enter a valid price','error');return;}
+  try{
+    const r=await fetch(`/staff/items/${id}/price/`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},
+      body:JSON.stringify({price})
+    });
+    const d=await r.json();
+    if(!d.success){toast(d.error||'Error','error');return;}
+    inp.value=d.price.toFixed(2);
+    toast('💰 Price updated to ₹'+d.price.toFixed(2));
+  }catch(e){toast('Network error','error');}
+}
+
+// ── DELETE ──
+let _delId=null,_delCard=null;
+function confirmDel(id,name,btn){
+  _delId=id;_delCard=btn.closest('.item-card');
+  document.getElementById('delName').textContent=name;
+  document.getElementById('delModal').classList.add('open');
+}
+function closeDelModal(){
+  document.getElementById('delModal').classList.remove('open');
+  _delId=null;_delCard=null;
+}
+document.getElementById('delModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeDelModal();});
+document.getElementById('confirmDelBtn').onclick=async function(){
+  if(!_delId)return;
+  try{
+    const r=await fetch(`/staff/items/${_delId}/delete/`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},
+      body:'{}'
+    });
+    const d=await r.json();
+    if(!d.success){toast(d.error||'Error','error');closeDelModal();return;}
+    if(_delCard)_delCard.remove();
+    closeDelModal();updateStats();
+    toast('🗑 Item deleted');
+  }catch(e){toast('Network error','error');closeDelModal();}
+};
+
+// ══════════════════════════════════════════════════════
+// ADD / EDIT MODAL
+// ══════════════════════════════════════════════════════
+let _editId=null;
+let _removeImg=false;
+
+function openAddModal(catId){
+  _editId=null;_removeImg=false;
+  document.getElementById('modalTitle').textContent='Add New Item';
+  document.getElementById('saveItemBtn').textContent='Add Item';
+  resetForm();
+  if(catId){
+    const sel=document.getElementById('f_category');
+    sel.value=catId;
+  }
+  document.getElementById('itemModal').classList.add('open');
+}
+
+async function openEditModal(id){
+  _editId=id;_removeImg=false;
+  document.getElementById('modalTitle').textContent='Edit Item';
+  document.getElementById('saveItemBtn').textContent='Save Changes';
+  resetForm();
+  document.getElementById('itemModal').classList.add('open');
+  // Fetch item data
+  try{
+    const r=await fetch(`/staff/items/${id}/get/`);
+    const d=await r.json();
+    if(d.error){toast(d.error,'error');return;}
+    document.getElementById('f_name').value=d.name;
+    document.getElementById('f_category').value=d.category_id;
+    document.getElementById('f_price').value=d.price;
+    document.getElementById('f_parcel').value=d.parcel_charge||0;
+    document.getElementById('f_desc').value=d.description||'';
+    setType(d.item_type);
+    setSw('swDine','f_dine',d.is_available_dine_in);
+    setSw('swTk','f_tk',d.is_available_takeaway);
+    setSw('swFeat','f_feat',d.is_featured);
+    // Image
+    if(d.image_url){
+      showPreview(d.image_url);
+    }
+  }catch(e){toast('Failed to load item','error');}
+}
+
+function closeItemModal(){
+  document.getElementById('itemModal').classList.remove('open');
+  _editId=null;_removeImg=false;
+}
+document.getElementById('itemModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeItemModal();});
+
+function resetForm(){
+  document.getElementById('itemForm').reset();
+  document.getElementById('f_type').value='veg';
+  setType('veg');
+  setSw('swDine','f_dine',true);
+  setSw('swTk','f_tk',true);
+  setSw('swFeat','f_feat',false);
+  // Clear image preview
+  document.getElementById('uploadPreviewImg').style.display='none';
+  document.getElementById('uploadPlaceholder').style.display='';
+  document.getElementById('imgRemoveBtn').style.display='none';
+  document.getElementById('uploadBox').classList.remove('has-img');
+}
+
+// Type selector
+function setType(val){
+  document.getElementById('f_type').value=val;
+  document.querySelectorAll('#typeGroup .tg-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.val===val);
+  });
+}
+
+// Switch toggle
+function toggleSw(swId,fieldId){
+  const sw=document.getElementById(swId);
+  const field=document.getElementById(fieldId);
+  const on=!sw.classList.contains('on');
+  sw.classList.toggle('on',on);
+  field.value=on?'true':'false';
+}
+function setSw(swId,fieldId,val){
+  document.getElementById(swId).classList.toggle('on',val);
+  document.getElementById(fieldId).value=val?'true':'false';
+}
+
+// Image preview
+function previewImg(input){
+  const file=input.files[0];
+  if(!file)return;
+  const url=URL.createObjectURL(file);
+  showPreview(url);
+}
+function showPreview(url){
+  const prev=document.getElementById('uploadPreviewImg');
+  const ph=document.getElementById('uploadPlaceholder');
+  const rm=document.getElementById('imgRemoveBtn');
+  const box=document.getElementById('uploadBox');
+  prev.src=url;prev.style.display='block';
+  ph.style.display='none';rm.style.display='flex';
+  box.classList.add('has-img');
+}
+function removeImg(e){
+  e.stopPropagation();
+  _removeImg=true;
+  document.getElementById('imgFileInput').value='';
+  document.getElementById('uploadPreviewImg').style.display='none';
+  document.getElementById('uploadPlaceholder').style.display='';
+  document.getElementById('imgRemoveBtn').style.display='none';
+  document.getElementById('uploadBox').classList.remove('has-img');
+}
+
+// SUBMIT
+async function submitItem(e){
+  e.preventDefault();
+  const btn=document.getElementById('saveItemBtn');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spin"></span>';
+
+  const form=document.getElementById('itemForm');
+  const fd=new FormData(form);
+
+  try{
+    let url,method;
+    if(_editId){
+      url=`/staff/items/${_editId}/edit/`;
+    } else {
+      url='/staff/items/add/';
+    }
+    const r=await fetch(url,{
+      method:'POST',
+      headers:{'X-CSRFToken':csrf()},
+      body:fd
+    });
+    const d=await r.json();
+    if(!d.success&&!d.item_id&&!d.name){
+      toast(d.error||'Failed to save','error');
+      btn.disabled=false;btn.textContent=_editId?'Save Changes':'Add Item';
+      return;
+    }
+    closeItemModal();
+    // If image uploaded successfully, update the card image immediately
+    // before the page reload so there's no flash of missing image
+    const targetId = _editId || d.item_id;
+    if(d.image_url && targetId){
+      const imgEl = document.getElementById('img-'+targetId);
+      if(imgEl){
+        if(imgEl.tagName === 'IMG'){
+          imgEl.src = d.image_url;
+        } else {
+          // Was a placeholder div — replace with real img
+          const newImg = document.createElement('img');
+          newImg.src = d.image_url;
+          newImg.alt = d.name || '';
+          newImg.loading = 'lazy';
+          newImg.id = 'img-'+targetId;
+          imgEl.parentNode.replaceChild(newImg, imgEl);
+        }
+      }
+    }
+    if(d.image_warning){
+      toast('⚠️ '+d.image_warning,'error');
+      setTimeout(()=>location.reload(),2500);
+    } else {
+      toast(_editId?'✅ Item updated!':'✅ Item added!','success');
+      setTimeout(()=>location.reload(),800);
+    }
+  }catch(err){
+    toast('Network error','error');
+    btn.disabled=false;btn.textContent=_editId?'Save Changes':'Add Item';
+  }
+}
+</script>
+</body>
+</html>

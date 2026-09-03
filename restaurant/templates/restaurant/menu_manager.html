@@ -1,0 +1,2443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Menu Manager — Brothers Cafe</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* ── COMBO BUILDER ── */
+.cb-wrap{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--bg)}
+.cb-head{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--card);border-bottom:1px solid var(--border)}
+.cb-search{flex:1;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-family:'Inter',sans-serif;font-size:13px;outline:none}
+.cb-search:focus{border-color:var(--acc)}
+.cb-cat{border:1px solid var(--border);border-radius:6px;padding:7px 8px;font-family:'Inter',sans-serif;font-size:12px;background:var(--card);max-width:150px}
+.cb-body{display:grid;grid-template-columns:1fr 1fr;gap:0;min-height:240px}
+.cb-col{display:flex;flex-direction:column;min-width:0}
+.cb-col+.cb-col{border-left:1px solid var(--border)}
+.cb-col-hd{padding:6px 10px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--sub);background:var(--card);border-bottom:1px solid var(--border)}
+.cb-list{flex:1;overflow-y:auto;max-height:260px;padding:6px}
+.cb-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;cursor:pointer;transition:.12s}
+.cb-item:hover{background:var(--card)}
+.cb-item.picked{opacity:.4}
+.cb-nm{flex:1;min-width:0;font-size:12.5px;line-height:1.25;overflow-wrap:anywhere}
+.cb-cat-tag{font-size:10px;color:var(--muted)}
+.cb-pr{font-size:12px;font-weight:600;color:var(--sub);flex-shrink:0}
+.cb-add{border:none;background:var(--green);color:#fff;width:22px;height:22px;border-radius:50%;font-size:15px;line-height:1;cursor:pointer;flex-shrink:0}
+.cb-sel{display:flex;align-items:center;gap:7px;padding:7px 8px;background:var(--card);border:1px solid var(--border);border-radius:6px;margin-bottom:5px}
+.cb-qty{display:flex;align-items:center;gap:3px;flex-shrink:0}
+.cb-qb{width:20px;height:20px;border-radius:4px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:13px;line-height:1;color:var(--text)}
+.cb-qv{min-width:18px;text-align:center;font-size:12px;font-weight:700}
+.cb-rm{border:none;background:transparent;color:var(--red);cursor:pointer;font-size:13px;flex-shrink:0}
+.cb-empty{text-align:center;color:var(--muted);font-size:12px;padding:34px 12px;line-height:1.5}
+.cb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:9px 11px;background:var(--card);border-top:1px solid var(--border)}
+.cb-stat{font-size:12px;color:var(--sub)}
+.cb-stat b{color:var(--text)}
+.cb-save-pill{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:11px}
+.cb-save-on{background:#e7f6ed;color:var(--green)}
+.cb-save-off{background:#fdecec;color:var(--red)}
+.cb-fill{border:none;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--text);font-family:'Inter',sans-serif}
+.cb-fill:hover{border-color:var(--acc);color:var(--acc)}
+
+:root{
+  --pri:#1a1a2e;--acc:#cb4b16;--acc2:#e8580e;
+  --green:#2d9e5c;--red:#dc3545;--blue:#2563eb;--amber:#d97706;
+  --bg:#f5f5f0;--card:#fff;--border:#e5e5e0;
+  --text:#1a1a1a;--sub:#6b6b6b;--muted:#9b9b9b;
+  --sidebar-w:220px;--topbar-h:56px;
+  --r:8px;--shadow:0 1px 6px rgba(0,0,0,.08);
+}
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+
+/* ── LAYOUT ── */
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* ── LEFT SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar-w);background:#fff;border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;
+}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:#e5e5e0}
+
+.sb-brand{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
+.sb-brand-name{font-size:15px;font-weight:800;color:var(--text);line-height:1}
+.sb-brand-sub{font-size:11px;color:var(--sub);margin-top:3px;font-weight:500}
+
+.sb-section{padding:12px 0 4px}
+.sb-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;padding:0 16px 6px}
+.sb-item{
+  display:flex;align-items:center;gap:10px;padding:9px 16px;
+  cursor:pointer;color:var(--sub);font-size:13px;font-weight:500;
+  border-left:3px solid transparent;transition:.15s;text-decoration:none;
+}
+.sb-item:hover{background:#fafaf8;color:var(--text);border-left-color:#ddd}
+.sb-item.active{background:#fff4f0;color:var(--acc);border-left-color:var(--acc);font-weight:600}
+.sb-item .si{width:18px;text-align:center;font-size:15px;flex-shrink:0}
+.sb-item .sc{flex:1}
+.sb-item .sbadge{background:#f0f0ee;color:var(--sub);font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px}
+.sb-item.active .sbadge{background:rgba(203,75,22,.12);color:var(--acc)}
+
+.sb-divider{height:1px;background:var(--border);margin:8px 16px}
+
+.sb-back{
+  margin:8px 12px;padding:8px 12px;border-radius:var(--r);
+  background:#f5f5f0;color:var(--sub);font-size:12px;font-weight:600;
+  text-decoration:none;display:flex;align-items:center;gap:7px;
+  border:1px solid var(--border);transition:.15s;
+}
+.sb-back:hover{background:#eee;color:var(--text)}
+
+/* ── RIGHT PANEL ── */
+.panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── TOPBAR ── */
+.topbar{
+  height:var(--topbar-h);background:#fff;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+  flex-shrink:0;
+}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-title{font-size:18px;font-weight:800;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.btn{
+  padding:8px 16px;border-radius:var(--r);font-size:13px;font-weight:600;
+  font-family:inherit;cursor:pointer;border:none;display:flex;align-items:center;gap:7px;
+  transition:.15s;text-decoration:none;
+}
+.btn-primary{background:var(--acc);color:#fff}
+.btn-primary:hover{background:var(--acc2)}
+.btn-ghost{background:#f5f5f0;color:var(--sub);border:1px solid var(--border)}
+.btn-ghost:hover{background:#eee;color:var(--text)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-danger{background:#fef2f2;color:var(--red);border:1px solid #fecaca}
+.btn-danger:hover{background:#fee2e2}
+.btn-edit{background:#eff6ff;color:var(--blue);border:1px solid #bfdbfe}
+.btn-edit:hover{background:#dbeafe}
+
+/* ── STATS ROW ── */
+.stats-row{display:flex;gap:12px;padding:18px 24px 0;flex-wrap:wrap}
+.stat-box{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;flex:1;min-width:130px}
+.stat-label{font-size:11px;color:var(--sub);font-weight:500;margin-bottom:4px}
+.stat-val{font-size:22px;font-weight:800;color:var(--text)}
+.stat-val.accent{color:var(--acc)}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;align-items:center;gap:10px;padding:14px 24px;flex-wrap:wrap}
+.search-box{position:relative;flex:1;min-width:200px}
+.search-box input{
+  width:100%;padding:9px 12px 9px 36px;border:1px solid var(--border);border-radius:var(--r);
+  font-size:13px;font-family:inherit;outline:none;background:#fff;color:var(--text);transition:.2s;
+}
+.search-box input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(203,75,22,.1)}
+.search-box .sicon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px}
+.filter-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.ftab{
+  padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;
+  border:1.5px solid var(--border);background:#fff;color:var(--sub);transition:.15s;
+}
+.ftab:hover{border-color:var(--acc);color:var(--acc)}
+.ftab.active{background:var(--acc);color:#fff;border-color:var(--acc)}
+
+/* ── CONTENT AREA ── */
+.content{flex:1;overflow-y:auto;padding:14px 24px 24px}
+.content::-webkit-scrollbar{width:5px}
+.content::-webkit-scrollbar-thumb{background:#e5e5e0;border-radius:5px}
+
+/* ── SECTION ── */
+.section{display:none;flex-direction:column;overflow:hidden}
+
+/* ── TABLE ── */
+.data-table{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--border)}
+.data-table th{background:#fafaf8;border-bottom:1px solid var(--border);padding:10px 14px;font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;text-align:left}
+.data-table td{padding:12px 14px;border-bottom:1px solid #f5f5f0;font-size:13px;vertical-align:middle}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:#fafaf8}
+.data-table .actions{display:flex;gap:6px}
+
+/* ── ITEM CARDS (Menu Items) ── */
+.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.item-card{
+  background:#fff;border:1px solid var(--border);border-radius:var(--r);
+  overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:var(--shadow);transition:.2s;
+}
+.item-card:hover{border-color:#d0ccc8;box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.ic-img{height:130px;background:#f5f5f0;position:relative;overflow:hidden;cursor:pointer}
+.ic-img img{width:100%;height:100%;object-fit:cover}
+.ic-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;color:#ccc;cursor:pointer}
+.ic-overlay{position:absolute;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;opacity:0;transition:.2s}
+.ic-img:hover .ic-overlay{opacity:1}
+.ic-overlay-txt{color:#fff;font-size:12px;font-weight:700}
+.veg-dot{position:absolute;top:7px;left:7px;width:18px;height:18px;border-radius:3px;border:2px solid;background:#fff;display:flex;align-items:center;justify-content:center}
+.veg-dot::after{content:'';width:8px;height:8px;border-radius:50%}
+.veg-dot.veg{border-color:#2d9e5c}.veg-dot.veg::after{background:#2d9e5c}
+.veg-dot.nonveg{border-color:#dc3545}.veg-dot.nonveg::after{background:#dc3545}
+.veg-dot.vegan{border-color:#16a34a}.veg-dot.vegan::after{background:#16a34a}
+.veg-dot.beverage{border-color:#2563eb}.veg-dot.beverage::after{background:#2563eb}
+.feat-tag{position:absolute;top:7px;right:7px;background:rgba(0,0,0,.5);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;cursor:pointer;border:none;font-family:inherit}
+.feat-tag.on{background:#d97706}
+.ic-body{padding:11px 13px;flex:1;display:flex;flex-direction:column;gap:7px}
+.ic-name{font-size:13px;font-weight:700;line-height:1.3}
+.ic-cat{font-size:11px;color:var(--sub)}
+.ic-price-row{display:flex;align-items:center;gap:6px}
+.ic-price-inp{width:76px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:700;font-family:inherit;color:var(--acc);outline:none}
+.ic-price-inp:focus{border-color:var(--acc)}
+.btn-save-price{background:var(--acc);color:#fff;border:none;border-radius:6px;padding:5px 9px;font-size:11px;font-weight:600;cursor:pointer}
+.avail-pills{display:flex;gap:5px;flex-wrap:wrap}
+.apill{
+  display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:20px;
+  font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid;transition:.15s;
+}
+.apill.on.dine{background:#f0fdf4;border-color:#2d9e5c;color:#166534}
+.apill.off.dine{background:#f5f5f0;border-color:#ddd;color:#aaa}
+.apill.on.tk{background:#eff6ff;border-color:#2563eb;color:#1d4ed8}
+.apill.off.tk{background:#f5f5f0;border-color:#ddd;color:#aaa}
+.apill .adot{width:5px;height:5px;border-radius:50%}
+.apill.on.dine .adot{background:#2d9e5c}
+.apill.on.tk .adot{background:#2563eb}
+.apill.off .adot{background:#ccc}
+.ic-footer{border-top:1px solid #f0f0ee;padding:8px 13px;display:flex;gap:6px;justify-content:flex-end}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-green{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.badge-red{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.badge-amber{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+.badge-blue{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}
+
+/* ── STATUS TOGGLE BUTTON ── */
+.status-toggle-btn{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid;font-family:inherit;transition:.18s;user-select:none;}
+.status-toggle-btn.st-on{background:#f0fdf4;color:#166534;border-color:#bbf7d0;}
+.status-toggle-btn.st-on:hover{background:#dcfce7;border-color:#86efac;}
+.status-toggle-btn.st-off{background:#fef2f2;color:#991b1b;border-color:#fecaca;}
+.status-toggle-btn.st-off:hover{background:#fee2e2;border-color:#fca5a5;}
+.status-toggle-btn[disabled]{opacity:.55;cursor:not-allowed;}
+
+/* ── EMPTY STATE ── */
+.empty-state{text-align:center;padding:60px 20px;color:var(--sub)}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:.4}
+.empty-text{font-size:14px;font-weight:500;margin-bottom:16px}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:12px;width:90%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:90vh;overflow:hidden;display:flex;flex-direction:column}
+.modal-lg{max-width:700px}
+.mhead{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.mhead h3{font-size:16px;font-weight:800}
+.mclose{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:0;line-height:1}
+.mclose:hover{color:var(--red)}
+.mbody{padding:20px 22px;overflow-y:auto;flex:1}
+.mbody::-webkit-scrollbar{width:4px}
+.mbody::-webkit-scrollbar-thumb{background:#e5e5e0}
+.mfoot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
+
+/* ── FORM ── */
+.fgrid{display:grid;gap:14px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg label{font-size:12px;font-weight:700;color:var(--text)}
+.fg label span{color:var(--red)}
+.fi,.fta,.fsel{
+  padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--r);
+  font-size:13px;font-family:inherit;outline:none;color:var(--text);background:#fff;
+  transition:.2s;width:100%;
+}
+.fi:focus,.fta:focus,.fsel:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(203,75,22,.1)}
+.fta{resize:vertical;min-height:72px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fhint{font-size:11px;color:var(--muted)}
+
+/* TOGGLE */
+.sw-row{display:flex;align-items:center;gap:10px;cursor:pointer}
+.sw{width:38px;height:21px;border-radius:11px;background:#e5e5e0;position:relative;transition:.2s;flex-shrink:0}
+.sw::after{content:'';position:absolute;width:17px;height:17px;border-radius:50%;background:#fff;top:2px;left:2px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.sw.on{background:var(--green)}
+.sw.on::after{left:19px}
+.sw-label{font-size:13px;font-weight:500}
+
+/* IMG UPLOAD */
+.img-upload{border:2px dashed var(--border);border-radius:var(--r);padding:18px;text-align:center;cursor:pointer;transition:.2s;position:relative;overflow:hidden;background:#fafaf8}
+.img-upload:hover{border-color:var(--acc);background:#fff4f0}
+.img-upload.has-img{padding:0;border-style:solid;border-color:#d0ccc8}
+.img-upload input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.img-preview{width:100%;height:150px;object-fit:cover;border-radius:6px;display:none}
+.img-remove{position:absolute;top:7px;right:7px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:24px;height:24px;font-size:13px;cursor:pointer;display:none;align-items:center;justify-content:center}
+.img-remove:hover{background:var(--red)}
+.img-ph{pointer-events:none}
+.img-ph-icon{font-size:28px;opacity:.4;margin-bottom:5px}
+.img-ph-text{font-size:12px;color:var(--sub);font-weight:500}
+.img-ph-hint{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* TYPE TOGGLE */
+.type-group{display:flex;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden}
+.tg-opt{flex:1;padding:8px 4px;font-size:11px;font-weight:600;font-family:inherit;border:none;background:#fff;color:var(--sub);cursor:pointer;transition:.15s;text-align:center}
+.tg-opt.on{background:var(--acc);color:#fff}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:#1a1a2e;color:#fff;padding:12px 18px;border-radius:9px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transform:translateY(20px);transition:.25s;pointer-events:none;max-width:300px}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{border-left:4px solid var(--green)}
+.toast.err{border-left:4px solid var(--red)}
+
+/* DELETE CONFIRM */
+.del-modal{max-width:380px}
+
+/* SHOP SETTINGS */
+.settings-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:22px;box-shadow:var(--shadow)}
+
+/* CUSTOMER TABLE */
+.cust-avatar{width:32px;height:32px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+
+/* ORDERS */
+.order-row-status{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.os-pending{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+.os-accepted{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}
+.os-preparing{background:#fdf4ff;color:#6b21a8;border:1px solid #e9d5ff}
+.os-ready{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.os-completed{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.os-cancelled{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+
+/* SPINNER */
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .frow{grid-template-columns:1fr}
+  .stats-row{flex-direction:column}
+  .items-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══ ADD/EDIT ITEM MODAL ══ -->
+<div class="modal-overlay modal-lg" id="itemModal">
+  <div class="modal modal-lg">
+    <div class="mhead"><h3 id="itemModalTitle">Add Menu Item</h3><button class="mclose" onclick="closeModal('itemModal')">×</button></div>
+    <div class="mbody">
+      <div class="fgrid">
+        <!-- Image -->
+        <div class="fg">
+          <label>Food Photo</label>
+          <div class="img-upload" id="itemImgBox" onclick="document.getElementById('itemImgFile').click()">
+            <input type="file" id="itemImgFile" accept="image/*" onchange="previewItemImg(this)"/>
+            <div class="img-ph" id="itemImgPh">
+              <div class="img-ph-icon">📷</div>
+              <div class="img-ph-text">Click to upload food image</div>
+              <div class="img-ph-hint">JPG, PNG, WEBP up to 5MB</div>
+            </div>
+            <img id="itemImgPreview" class="img-preview" alt=""/>
+            <button type="button" class="img-remove" id="itemImgRemove" onclick="removeItemImg(event)">×</button>
+          </div>
+        </div>
+        <!-- Name -->
+        <div class="fg"><label>Item Name <span>*</span></label><input class="fi" id="f_iname" type="text" placeholder="e.g. Paneer Butter Masala"/></div>
+        <!-- Category -->
+        <div class="fg">
+          <label>Category <span>*</span></label>
+          <select class="fsel" id="f_icat">
+            {% for cat in all_categories %}<option value="{{ cat.id }}">{{ cat.icon|default:"🍽️" }} {{ cat.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <!-- Price + Parcel -->
+        <div class="frow">
+          <div class="fg"><label>Price (₹) <span>*</span></label><input class="fi" id="f_iprice" type="number" min="0" step="0.5" placeholder="160"/></div>
+          <div class="fg"><label>Parcel Charge (₹)</label><input class="fi" id="f_iparcel" type="number" min="0" step="0.5" placeholder="25"/></div>
+        </div>
+        <!-- Type -->
+        <div class="fg">
+          <label>Type</label>
+          <div class="type-group" id="f_itype_grp">
+            <button type="button" class="tg-opt on" data-val="veg" onclick="setItemType('veg')">🟢 Veg</button>
+            <button type="button" class="tg-opt" data-val="nonveg" onclick="setItemType('nonveg')">🔴 Non-Veg</button>
+            <button type="button" class="tg-opt" data-val="vegan" onclick="setItemType('vegan')">🌿 Vegan</button>
+            <button type="button" class="tg-opt" data-val="beverage" onclick="setItemType('beverage')">🔵 Beverage</button>
+          </div>
+          <input type="hidden" id="f_itype" value="veg"/>
+        </div>
+        <!-- Description -->
+        <div class="fg"><label>Description</label><textarea class="fta" id="f_idesc" placeholder="Short description shown to customers…"></textarea></div>
+        <!-- Availability -->
+        <div class="fg">
+          <label>Availability</label>
+          <div style="display:flex;gap:16px;flex-wrap:wrap">
+            <div class="sw-row" onclick="toggleItemSw('sw_dine','f_idine')"><div class="sw on" id="sw_dine"></div><span class="sw-label">🍽️ Dine-in</span></div>
+            <div class="sw-row" onclick="toggleItemSw('sw_tk','f_itk')"><div class="sw on" id="sw_tk"></div><span class="sw-label">📦 Takeaway</span></div>
+            <div class="sw-row" onclick="toggleItemSw('sw_feat','f_ifeat')"><div class="sw" id="sw_feat"></div><span class="sw-label">⭐ Featured</span></div>
+            <div class="sw-row" onclick="toggleItemSw('sw_wbi','f_iwb')"><div class="sw" id="sw_wbi"></div><span class="sw-label">💧 This is a water bottle</span></div>
+          </div>
+          <div style="font-size:10.5px;color:var(--muted);margin-top:-4px">Only items marked as a water bottle can be used for the cart quick-add card.</div>
+          <input type="hidden" id="f_idine" value="true"/>
+          <input type="hidden" id="f_itk" value="true"/>
+          <input type="hidden" id="f_ifeat" value="false"/>
+          <input type="hidden" id="f_iwb" value="false"/>
+        </div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('itemModal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="itemSaveBtn" onclick="saveItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CATEGORY MODAL ══ -->
+<div class="modal-overlay" id="catModal">
+  <div class="modal">
+    <div class="mhead"><h3 id="catModalTitle">Add Category</h3><button class="mclose" onclick="closeModal('catModal')">×</button></div>
+    <div class="mbody">
+      <div class="fgrid">
+        <div class="frow">
+          <div class="fg"><label>Name <span>*</span></label><input class="fi" id="f_cname" type="text" placeholder="e.g. Biryani"/></div>
+          <div class="fg"><label>Icon (emoji)</label><input class="fi" id="f_cicon" type="text" placeholder="🍛" style="font-size:20px;text-align:center"/></div>
+        </div>
+        <div class="fg"><label>Description</label><textarea class="fta" id="f_cdesc" placeholder="Short description…" style="min-height:55px"></textarea></div>
+        <div class="fg"><label>Display Order</label><input class="fi" id="f_corder" type="number" min="0" placeholder="0"/></div>
+        <div class="sw-row" onclick="toggleSw('sw_cactive','f_cactive')"><div class="sw on" id="sw_cactive"></div><span class="sw-label">Active (visible to customers)</span></div>
+        <input type="hidden" id="f_cactive" value="true"/>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('catModal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="catSaveBtn" onclick="saveCategory()">Save Category</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ COMBO MODAL ══ -->
+{{ picker_items|json_script:"picker-items" }}
+<div class="modal-overlay" id="comboModal">
+  <div class="modal">
+    <div class="mhead"><h3 id="comboModalTitle">Add Combo</h3><button class="mclose" onclick="closeModal('comboModal')">×</button></div>
+    <div class="mbody">
+      <div class="fgrid">
+        <div class="fg"><label>Combo Name <span>*</span></label><input class="fi" id="f_coname" type="text" placeholder="e.g. Family Meal Deal"/></div>
+        <div class="frow">
+          <div class="fg"><label>Price (₹) <span>*</span></label><input class="fi" id="f_coprice" type="number" min="0" step="0.5" placeholder="299" oninput="cbUpdateTotals()"/></div>
+          <div class="fg"><label>Icon</label><input class="fi" id="f_coicon" type="text" placeholder="🎁" style="font-size:20px;text-align:center"/></div>
+        </div>
+        <div class="fg" style="margin-top:2px">
+          <label>Items in this Combo <span>*</span></label>
+          <div class="cb-wrap">
+            <div class="cb-head">
+              <input class="cb-search" id="cbSearch" type="text" placeholder="Search menu items…" oninput="cbRenderPool()"/>
+              <select class="cb-cat" id="cbCat" onchange="cbRenderPool()"><option value="">All categories</option></select>
+            </div>
+            <div class="cb-body">
+              <div class="cb-col">
+                <div class="cb-col-hd">Menu</div>
+                <div class="cb-list" id="cbPool"></div>
+              </div>
+              <div class="cb-col">
+                <div class="cb-col-hd">In this combo (<span id="cbCount">0</span>)</div>
+                <div class="cb-list" id="cbPicked"></div>
+              </div>
+            </div>
+            <div class="cb-foot">
+              <div class="cb-stat">
+                Items value <b id="cbValue">₹0</b>
+                &nbsp;·&nbsp; Combo price <b id="cbPrice">₹0</b>
+                &nbsp;·&nbsp; <span class="cb-save-pill cb-save-off" id="cbSaving">Set a price</span>
+              </div>
+              <button type="button" class="cb-fill" onclick="cbSuggestPrice()">Use items value</button>
+            </div>
+          </div>
+        </div>
+        <div class="fg">
+          <label>Image</label>
+          <input class="fi" id="f_coimage" type="file" accept="image/*" onchange="previewComboImg()" style="padding:8px"/>
+          <div id="coImgPreview" style="display:none;margin-top:6px">
+            <img id="coImgPrev" style="width:100%;max-height:130px;object-fit:cover;border-radius:8px"/>
+            <label style="font-size:11px;color:var(--sub);margin-top:4px;display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="f_coRemoveImg"/> Remove current image
+            </label>
+          </div>
+          <div style="font-size:10.5px;color:var(--muted);margin-top:4px">Optional. Without an image the icon below is shown instead.</div>
+        </div>
+        <div class="fg"><label>Description</label><textarea class="fta" id="f_codesc" placeholder="What's included…" style="min-height:60px"></textarea></div>
+        <div id="comboOfferFields" style="display:none;background:#fff8ed;border:1px solid #f0dcc0;border-radius:8px;padding:11px 12px;margin-top:2px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#a97b32;margin-bottom:8px">Combo Offer settings</div>
+          <div class="fg" style="margin-bottom:9px"><label>Badge text</label><input class="fi" id="f_cotag" type="text" maxlength="40" placeholder="e.g. LIMITED TIME"/></div>
+          <div class="frow">
+            <div class="fg"><label>Runs from</label><input class="fi" id="f_covfrom" type="date"/></div>
+            <div class="fg"><label>Runs until</label><input class="fi" id="f_covto" type="date"/></div>
+          </div>
+          <div style="font-size:11px;color:#8a6a3a;margin-top:6px;line-height:1.45">Leave both dates blank to run the offer indefinitely.</div>
+        </div>
+        <div class="fg"><label>Display Order</label><input class="fi" id="f_coorder" type="number" min="0" placeholder="0"/></div>
+        <div class="sw-row" onclick="toggleSw('sw_coactive','f_coactive')"><div class="sw on" id="sw_coactive"></div><span class="sw-label">Active</span></div>
+        <input type="hidden" id="f_coactive" value="true"/>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('comboModal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="comboSaveBtn" onclick="saveCombo()">Save Combo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DISCOUNT MODAL ══ -->
+<div class="modal-overlay" id="discModal">
+  <div class="modal">
+    <div class="mhead"><h3 id="discModalTitle">Add Discount</h3><button class="mclose" onclick="closeModal('discModal')">×</button></div>
+    <div class="mbody">
+      <div class="fgrid">
+        <div class="fg"><label>Discount Name <span>*</span></label><input class="fi" id="f_dname" type="text" placeholder="e.g. Weekend Special"/></div>
+        <div class="fg"><label>Discount % <span>*</span></label><input class="fi" id="f_dpct" type="number" min="0" max="100" step="0.5" placeholder="10"/></div>
+        <div class="frow">
+          <div class="fg"><label>Valid From</label><input class="fi" id="f_dfrom" type="date"/></div>
+          <div class="fg"><label>Valid To</label><input class="fi" id="f_dto" type="date"/></div>
+        </div>
+        <div class="fg"><label>Description</label><textarea class="fta" id="f_ddesc" style="min-height:55px" placeholder="Optional details…"></textarea></div>
+        <div class="sw-row" onclick="toggleSw('sw_dactive','f_dactive')"><div class="sw on" id="sw_dactive"></div><span class="sw-label">Active</span></div>
+        <input type="hidden" id="f_dactive" value="true"/>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('discModal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="discSaveBtn" onclick="saveDiscount()">Save Discount</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OFFER BANNER MODAL ══ -->
+<div class="modal-overlay" id="offerModal">
+  <div class="modal">
+    <div class="mhead"><h3 id="offerModalTitle">Add Offer Banner</h3><button class="mclose" onclick="closeModal('offerModal')">×</button></div>
+    <div class="mbody" style="max-height:70vh;overflow-y:auto;">
+      <div class="fgrid">
+        <div class="fg"><label>Offer Title <span>*</span></label><input class="fi" id="f_otitle" type="text" placeholder="e.g. Weekend Special"/></div>
+        <div class="fg"><label>Subtitle</label><input class="fi" id="f_osub" type="text" placeholder="e.g. On all beverages this weekend"/></div>
+        <div class="fg"><label>Offer Type <span>*</span></label>
+          <select class="fi" id="f_otype" onchange="toggleOfferTypeFields()">
+            <option value="percent">% OFF</option>
+            <option value="flat">Flat ₹ OFF</option>
+            <option value="bogo">Buy 1 Get 1 Free (1+1)</option>
+          </select>
+        </div>
+        <div class="frow">
+          <div class="fg" id="fg_opct"><label>OFF %</label><input class="fi" id="f_opct" type="number" min="0" max="100" step="0.5" placeholder="10"/></div>
+          <div class="fg" id="fg_oflat" style="display:none"><label>Flat ₹ OFF</label><input class="fi" id="f_oflat" type="number" min="0" step="1" placeholder="50"/></div>
+          <div class="fg"><label>Emoji</label><input class="fi" id="f_oemoji" type="text" value="🎉" style="text-align:center"/></div>
+        </div>
+        <div class="fg"><label>Banner Image</label>
+          <input class="fi" id="f_oimage" type="file" accept="image/*" onchange="previewOfferImg()" style="padding:8px;"/>
+          <div id="oImgPreview" style="display:none;margin-top:6px;position:relative;"><img id="oImgPrev" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;"/><label style="font-size:11px;color:var(--sub);margin-top:4px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="f_oRemoveImg"/> Remove current image</label></div>
+          <input class="fi" id="f_oimg" type="url" placeholder="Or paste image URL (https://...)" style="margin-top:6px;font-size:11px;"/>
+        </div>
+        <div class="frow">
+          <div class="fg"><label>Banner Colour</label><input class="fi" id="f_ocolor" type="color" value="#e74c3c" style="height:42px;padding:4px;cursor:pointer"/></div>
+          <div class="frow">
+            <div class="fg"><label>Runs from</label><input class="fi" id="f_ovfrom" type="date"/></div>
+            <div class="fg"><label>Runs until</label><input class="fi" id="f_ovto" type="date"/></div>
+          </div>
+          <div style="font-size:10.5px;color:var(--muted);margin:-4px 0 4px">Leave both blank to run indefinitely.</div>
+          <div class="fg"><label>Display Order</label><input class="fi" id="f_oorder" type="number" min="0" value="0"/></div>
+        </div>
+        <div class="fg">
+          <label>Linked Menu Items (tap to select)</label>
+          <div style="font-size:10px;color:var(--sub);margin-bottom:6px;">Select items included in this offer. Customers can tap the banner to see these items.</div>
+          <input class="fi" id="f_oItemSearch" type="text" placeholder="🔍 Search items..." oninput="filterOfferItems()" style="margin-bottom:6px;"/>
+          <div id="offerItemsList" style="max-height:180px;overflow-y:auto;border:1px solid var(--bdr);border-radius:8px;padding:6px;">
+            {% for mi in menu_items %}
+            <label class="offer-item-label" data-name="{{ mi.name|lower }}" style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:12px;">
+              <input type="checkbox" class="offer-item-cb" value="{{ mi.id }}" style="width:16px;height:16px;accent-color:#27ae60;flex-shrink:0;">
+              <span style="flex:1">{{ mi.name }}</span>
+              <span style="color:var(--sub);font-size:11px;">₹{{ mi.price|floatformat:0 }}</span>
+              <span style="color:var(--sub);font-size:10px;">{{ mi.category.name }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="sw-row" onclick="toggleSw('sw_oactive','f_oactive')"><div class="sw on" id="sw_oactive"></div><span class="sw-label">Active (visible to customers)</span></div>
+        <input type="hidden" id="f_oactive" value="true"/>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('offerModal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="offerSaveBtn" onclick="saveOffer()">Save Offer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CART OFFER MODAL ══ -->
+<div class="modal-overlay" id="cartOfferModal">
+  <div class="modal">
+    <div class="mhead"><h3 id="cartOfferModalTitle">Add Cart Offer</h3><button class="mclose" onclick="closeModal('cartOfferModal')">×</button></div>
+    <div class="mbody">
+      <div class="fgrid">
+        <div class="fg"><label>Offer Title <span>*</span></label><input class="fi" id="cof_title" type="text" placeholder="e.g. Mega Saver Deal"/></div>
+        <div class="fg"><label>Subtitle</label><input class="fi" id="cof_sub" type="text" placeholder="e.g. Spend ₹600 and save big!"/></div>
+        <div class="fg"><label>Minimum Cart Value (₹) <span>*</span></label><input class="fi" id="cof_min" type="number" min="0" placeholder="600"/></div>
+        <div class="fg"><label>Reward Type <span>*</span></label>
+          <select class="fi" id="cof_rtype" onchange="toggleCartOfferReward()">
+            <option value="percent">% Discount</option>
+            <option value="flat">Flat ₹ Discount</option>
+            <option value="free_item">Free Item</option>
+          </select>
+        </div>
+        <div class="fg" id="cof_pct_row"><label>Discount %</label><input class="fi" id="cof_pct" type="number" min="0" max="100" placeholder="20"/></div>
+        <div class="fg" id="cof_flat_row" style="display:none"><label>Flat ₹ OFF</label><input class="fi" id="cof_flat" type="number" min="0" placeholder="200"/></div>
+        <div class="fg" id="cof_item_row" style="display:none"><label>Free Item</label>
+          <select class="fi" id="cof_item">
+            <option value="">-- Select item --</option>
+            {% for mi in menu_items %}<option value="{{ mi.id }}">{{ mi.name }} (₹{{ mi.price }})</option>{% endfor %}
+          </select>
+        </div>
+        <div class="frow">
+          <div class="fg"><label>Emoji</label><input class="fi" id="cof_emoji" value="🎁" style="text-align:center"/></div>
+          <div class="frow">
+            <div class="fg"><label>Runs from</label><input class="fi" id="cof_vfrom" type="date"/></div>
+            <div class="fg"><label>Runs until</label><input class="fi" id="cof_vto" type="date"/></div>
+          </div>
+          <div style="font-size:10.5px;color:var(--muted);margin:-4px 0 4px">Leave both blank to run indefinitely.</div>
+          <div class="fg"><label>Display Order</label><input class="fi" id="cof_order" type="number" min="0" value="0"/></div>
+        </div>
+        <div class="sw-row" onclick="toggleSw('sw_cof_active','cof_active')"><div class="sw on" id="sw_cof_active"></div><span class="sw-label">Active (visible to customers)</span></div>
+        <input type="hidden" id="cof_active" value="true"/>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('cartOfferModal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="cartOfferSaveBtn" onclick="saveCartOffer()">Save Offer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TABLE MODAL ══ -->
+<div class="modal-overlay" id="tableModal">
+  <div class="modal">
+    <div class="mhead"><h3 id="tableModalTitle">Add Table</h3><button class="mclose" onclick="closeModal('tableModal')">×</button></div>
+    <div class="mbody">
+      <div class="fgrid">
+        <div class="frow">
+          <div class="fg"><label>Table Number <span>*</span></label><input class="fi" id="f_tnum" type="number" min="1" placeholder="1"/></div>
+          <div class="fg"><label>Capacity (seats)</label><input class="fi" id="f_tcap" type="number" min="1" placeholder="4"/></div>
+        </div>
+        <div class="fg"><label>Table Name <span>*</span></label><input class="fi" id="f_tname" type="text" placeholder="e.g. Table 1, VIP Table"/></div>
+        <div class="fg"><label>Description / Location</label><input class="fi" id="f_tdesc" type="text" placeholder="e.g. Near window"/></div>
+        <div class="sw-row" onclick="toggleSw('sw_tactive','f_tactive')"><div class="sw on" id="sw_tactive"></div><span class="sw-label">Active</span></div>
+        <input type="hidden" id="f_tactive" value="true"/>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('tableModal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="tableSaveBtn" onclick="saveTable()">Save Table</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DELETE MODAL ══ -->
+<div class="modal-overlay" id="delModal">
+  <div class="modal del-modal">
+    <div class="mhead"><h3>Confirm Delete</h3><button class="mclose" onclick="closeModal('delModal')">×</button></div>
+    <div class="mbody" style="font-size:14px;color:var(--sub);line-height:1.6">
+      Delete <strong id="delName" style="color:var(--text)"></strong>?<br>
+      <span style="color:var(--red);font-weight:600">This cannot be undone.</span>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('delModal')">Cancel</button>
+      <button class="btn btn-sm" id="delConfirmBtn" style="background:var(--red);color:#fff">Yes, Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ APP ══════════════════ -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-brand-name">Brothers Cafe</div>
+      <div class="sb-brand-sub">Menu Manager</div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Manage</div>
+
+      <div class="sb-item active" id="sb-categories" onclick="goSection('categories',this)">
+        <span class="si">⊞</span>
+        <span class="sc">Categories</span>
+        <span class="sbadge" id="cnt-categories">{{ cat_count }}</span>
+      </div>
+      <div class="sb-item" id="sb-combos" onclick="goSection('combos',this)">
+        <span class="si">🎁</span>
+        <span class="sc">Combos</span>
+        <span class="sbadge" id="cnt-combos">{{ combo_count }}</span>
+      </div>
+      <div class="sb-item" id="sb-combooffers" onclick="goSection('combooffers',this)">
+        <span class="si">🏷️</span>
+        <span class="sc">Combo Offers</span>
+        <span class="sbadge" id="cnt-combooffers">{{ combo_offer_count }}</span>
+      </div>
+      <div class="sb-item" id="sb-customers" onclick="goSection('customers',this)">
+        <span class="si">👥</span>
+        <span class="sc">Customers</span>
+      </div>
+      <div class="sb-item" id="sb-discounts" onclick="goSection('discounts',this)">
+        <span class="si">🏷️</span>
+        <span class="sc">Discounts</span>
+        <span class="sbadge" id="cnt-discounts">{{ discounts.count }}</span>
+      </div>
+      <div class="sb-item" id="sb-offers" onclick="goSection('offers',this)">
+        <span class="si">🎉</span>
+        <span class="sc">Offer Banners</span>
+        <span class="sbadge" id="cnt-offers">{{ offers.count }}</span>
+      </div>
+      <div class="sb-item" id="sb-cartoffers" onclick="goSection('cartoffers',this)">
+        <span class="si">🛒</span>
+        <span class="sc">Cart Offers</span>
+        <span class="sbadge" id="cnt-cartoffers">{{ cart_offers.count }}</span>
+      </div>
+      <div class="sb-item" id="sb-menu-items" onclick="goSection('menu-items',this)">
+        <span class="si">🍽️</span>
+        <span class="sc">Menu Items</span>
+        <span class="sbadge" id="cnt-menu-items">{{ total_items }}</span>
+      </div>
+      <div class="sb-item" id="sb-orders" onclick="goSection('orders',this)">
+        <span class="si">📋</span>
+        <span class="sc">Orders</span>
+      </div>
+      <div class="sb-item" id="sb-shop" onclick="goSection('shop',this)">
+        <span class="si">⚙️</span>
+        <span class="sc">Shop Settings</span>
+      </div>
+      <div class="sb-item" id="sb-tables" onclick="goSection('tables',this)">
+        <span class="si">🪑</span>
+        <span class="sc">Tables</span>
+        <span class="sbadge" id="cnt-tables">{{ tables.count }}</span>
+      </div>
+
+      <div class="sb-divider"></div>
+      <div class="sb-label">Ordering</div>
+
+      <div class="sb-item" id="sb-cat-order" onclick="goSection('cat-order',this)">
+        <span class="si">↕️</span>
+        <span class="sc">Category Order</span>
+      </div>
+      <div class="sb-item" id="sb-items-order" onclick="goSection('items-order',this)">
+        <span class="si">🔢</span>
+        <span class="sc">Items Order</span>
+      </div>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <a class="sb-back" href="{% url 'staff_portal' %}">← Staff Portal</a>
+  </aside>
+
+  <!-- RIGHT PANEL -->
+  <div class="panel">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="pageTitle">Categories</div>
+      </div>
+      <div class="topbar-right" id="topbarActions">
+        <button class="btn btn-primary" id="mainAddBtn" onclick="openAddModal()">+ Add Category</button>
+      </div>
+    </div>
+
+    <!-- ── MENU ITEMS SECTION ── -->
+    <div class="section" id="sec-menu-items" style="display:none">
+      <!-- stats -->
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-label">Total Items</div><div class="stat-val" id="mi-total">{{ total_items }}</div></div>
+        <div class="stat-box"><div class="stat-label">Available</div><div class="stat-val" id="mi-avail">{{ available_items }}</div></div>
+        <div class="stat-box"><div class="stat-label">Categories</div><div class="stat-val">{{ cat_count }}</div></div>
+        <div class="stat-box"><div class="stat-label">Avg Price</div><div class="stat-val accent">₹{{ avg_price|floatformat:0 }}</div></div>
+      </div>
+      <!-- filter -->
+      <div class="filter-bar">
+        <div class="search-box"><span class="sicon">🔍</span><input type="text" placeholder="Search items…" oninput="filterItems(this.value)" id="itemSearch"/></div>
+        <div class="filter-tabs">
+          <div class="ftab active" onclick="filterItemCat('',this)">All</div>
+          {% for cat in categories %}<div class="ftab" onclick="filterItemCat('{{ cat.id }}',this)">{{ cat.name }}</div>{% endfor %}
+        </div>
+      </div>
+      <div class="content" style="padding-top:0">
+        <div class="items-grid" id="itemsGrid">
+          {% for item in menu_items %}
+          <div class="item-card" data-id="{{ item.id }}" data-name="{{ item.name|lower }}" data-cat="{{ item.category_id }}"
+               id="icard-{{ item.id }}">
+            <div class="ic-img" onclick="openEditItemModal({{ item.id }})">
+              {% if item.image %}<img src="{{ item.image.url }}" alt="{{ item.name }}" id="iimg-{{ item.id }}"/>
+              {% else %}<div class="ic-placeholder" id="iimg-{{ item.id }}">{{ item.category.icon|default:"🍽️" }}</div>{% endif %}
+              <div class="veg-dot {{ item.item_type }}"></div>
+              <button class="feat-tag {% if item.is_featured %}on{% endif %}" onclick="event.stopPropagation();toggleFeat({{ item.id }},this)">{% if item.is_featured %}⭐ Featured{% else %}☆ Feature{% endif %}</button>
+              <div class="ic-overlay"><div class="ic-overlay-txt">✏️ Edit</div></div>
+            </div>
+            <div class="ic-body">
+              <div class="ic-name">{{ item.name }}</div>
+              <div class="ic-cat">{{ item.category.name }}</div>
+              <div class="ic-price-row">
+                <span style="color:var(--sub);font-size:13px">₹</span>
+                <input class="ic-price-inp" type="number" value="{{ item.price }}" min="0" step="0.5" id="iprice-{{ item.id }}" onkeydown="if(event.key==='Enter')savePrice({{ item.id }})"/>
+                <button class="btn-save-price" onclick="savePrice({{ item.id }})">Save</button>
+                {% if item.parcel_charge %}<span style="font-size:10px;color:var(--muted);margin-left:auto">+₹{{ item.parcel_charge }}</span>{% endif %}
+              </div>
+              <div class="avail-pills">
+                <div class="apill {% if item.is_available_dine_in %}on{% else %}off{% endif %} dine" id="dine-{{ item.id }}" onclick="toggleAvail({{ item.id }},'dine_in',this)">
+                  <span class="adot"></span>🍽️ Dine-in
+                </div>
+                <div class="apill {% if item.is_available_takeaway %}on{% else %}off{% endif %} tk" id="tk-{{ item.id }}" onclick="toggleAvail({{ item.id }},'takeaway',this)">
+                  <span class="adot"></span>📦 Takeaway
+                </div>
+              </div>
+            </div>
+            <div class="ic-footer">
+              <button class="btn btn-edit btn-sm" onclick="openEditItemModal({{ item.id }})">✏️ Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="confirmDel('item',{{ item.id }},'{{ item.name|escapejs }}')">🗑</button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CATEGORIES SECTION ── -->
+    <div class="section" id="sec-categories">
+      <div class="content">
+        <table class="data-table" id="catTable">
+          <thead><tr><th>Icon</th><th>Name</th><th>Items</th><th>Order</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="catBody">
+            {% for cat in categories %}
+            <tr id="catrow-{{ cat.id }}">
+              <td style="font-size:22px">{{ cat.icon|default:"🍽️" }}</td>
+              <td><div style="font-weight:600">{{ cat.name }}</div><div style="font-size:11px;color:var(--sub)">{{ cat.description }}</div></td>
+              <td><span class="badge badge-blue">{{ cat.items.count }} items</span></td>
+              <td>{{ cat.order }}</td>
+              <td><button class="status-toggle-btn {% if cat.is_active %}st-on{% else %}st-off{% endif %}" id="stbtn-cat-{{ cat.id }}" onclick="quickToggleStatus('category',{{ cat.id }},this)">{% if cat.is_active %}● Active{% else %}○ Hidden{% endif %}</button></td>
+              <td><div class="actions">
+                <button class="btn btn-edit btn-sm" onclick="openEditCatModal({{ cat.id }},'{{ cat.name|escapejs }}','{{ cat.icon|escapejs }}','{{ cat.description|escapejs }}',{{ cat.order }},{{ cat.is_active|yesno:'true,false' }})">✏️ Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="confirmDel('category',{{ cat.id }},'{{ cat.name|escapejs }}')">🗑</button>
+              </div></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── COMBOS SECTION ── -->
+    <div class="section" id="sec-combos">
+      <div class="content">
+        <table class="data-table" id="comboTable">
+          <thead><tr><th>Icon</th><th>Name</th><th>Price</th><th>Items</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="comboBody">
+            {% for combo in combos %}
+            <tr id="comborow-{{ combo.id }}">
+              <td style="font-size:22px">{{ combo.icon|default:"🎁" }}</td>
+              <td><div style="font-weight:600">{{ combo.name }}</div><div style="font-size:11px;color:var(--sub)">{{ combo.description|truncatechars:50 }}</div></td>
+              <td style="font-weight:700;color:var(--acc)">₹{{ combo.price }}</td>
+              <td>
+                {% for ci in combo.combo_items.all %}<div style="font-size:11px">{{ ci.quantity }}× {{ ci.menu_item.name }}</div>
+                {% empty %}<span style="font-size:11px;color:var(--red);font-weight:600">⚠ No items — edit to add</span>{% endfor %}
+              </td>
+              <td><button class="status-toggle-btn {% if combo.is_active %}st-on{% else %}st-off{% endif %}" id="stbtn-combo-{{ combo.id }}" onclick="quickToggleStatus('combo',{{ combo.id }},this)">{% if combo.is_active %}● Active{% else %}○ Hidden{% endif %}</button></td>
+              <td><div class="actions">
+                <button class="btn btn-edit btn-sm" onclick="openEditComboModal({{ combo.id }},'{{ combo.name|escapejs }}','{{ combo.description|escapejs }}',{{ combo.price }},'{{ combo.icon|escapejs }}',{{ combo.order }},{{ combo.is_active|yesno:'true,false' }})">✏️ Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="confirmDel('combo',{{ combo.id }},'{{ combo.name|escapejs }}')">🗑</button>
+              </div></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- ── COMBO OFFERS SECTION ── -->
+    <div class="section" id="sec-combooffers">
+      <div class="content">
+        <div style="background:#fff8ed;border:1px solid #f0dcc0;border-radius:8px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;color:#7a5c2e;line-height:1.5;">
+          <b>🏷️ Combo Offers appear in a highlighted strip at the very top of the customer menu.</b><br/>
+          Pick the items, set one fixed price, and the customer sees what they save. Leave the dates blank to run it indefinitely.
+        </div>
+        <table class="data-table" id="comboOfferTable">
+          <thead><tr><th>Icon</th><th>Offer</th><th>Items</th><th>Value</th><th>Offer Price</th><th>Saves</th><th>Runs</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="comboOfferBody">
+            {% for combo in combo_offers %}
+            <tr id="comborow-{{ combo.id }}">
+              <td style="font-size:22px">{{ combo.icon|default:"🎁" }}</td>
+              <td>
+                <div style="font-weight:600">{{ combo.name }}</div>
+                {% if combo.offer_tag %}<div style="display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.4px;background:var(--acc);color:#fff;padding:1px 7px;border-radius:9px;margin-top:3px">{{ combo.offer_tag }}</div>{% endif %}
+                <div style="font-size:11px;color:var(--sub)">{{ combo.description|truncatechars:44 }}</div>
+              </td>
+              <td>
+                {% for ci in combo.combo_items.all %}<div style="font-size:11px">{{ ci.quantity }}× {{ ci.menu_item.name }}</div>
+                {% empty %}<span style="font-size:11px;color:var(--red);font-weight:600">⚠ No items — edit to add</span>{% endfor %}
+              </td>
+              <td style="font-size:12px;color:var(--sub);text-decoration:line-through">₹{{ combo.items_value|floatformat:0 }}</td>
+              <td style="font-weight:700;color:var(--acc)">₹{{ combo.price|floatformat:0 }}</td>
+              <td>{% if combo.savings %}<span style="font-size:11.5px;font-weight:700;background:#e7f6ed;color:var(--green);padding:2px 8px;border-radius:10px">₹{{ combo.savings|floatformat:0 }} · {{ combo.savings_percent }}%</span>{% else %}<span style="font-size:11px;color:var(--muted)">—</span>{% endif %}</td>
+              <td style="font-size:11px;color:var(--sub)">
+                {% if combo.valid_from or combo.valid_to %}{{ combo.valid_from|date:"d M"|default:"—" }} → {{ combo.valid_to|date:"d M"|default:"—" }}
+                {% else %}Always{% endif %}
+                {% if not combo.is_live_offer and combo.is_active %}<div style="color:var(--amber);font-weight:600">Not live today</div>{% endif %}
+              </td>
+              <td><button class="status-toggle-btn {% if combo.is_active %}st-on{% else %}st-off{% endif %}" id="stbtn-combo-{{ combo.id }}" onclick="quickToggleStatus('combo',{{ combo.id }},this)">{% if combo.is_active %}● Active{% else %}○ Hidden{% endif %}</button></td>
+              <td><div class="actions">
+                <button class="btn btn-edit btn-sm" onclick="openEditComboModal({{ combo.id }},'{{ combo.name|escapejs }}','{{ combo.description|escapejs }}',{{ combo.price }},'{{ combo.icon|escapejs }}',{{ combo.order }},{{ combo.is_active|yesno:'true,false' }},true)">✏️ Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="confirmDel('combo',{{ combo.id }},'{{ combo.name|escapejs }}')">🗑</button>
+              </div></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="9" style="text-align:center;padding:34px 12px;color:var(--muted);font-size:13px;line-height:1.6">
+              No combo offers yet.<br/>Click <b>+ Add Combo Offer</b> to build one — it will show at the top of the customer menu.
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── DISCOUNTS SECTION ── -->
+    <div class="section" id="sec-discounts">
+      <div class="content">
+        <table class="data-table">
+          <thead><tr><th>Name</th><th>Discount</th><th>Valid From</th><th>Valid To</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="discBody">
+            {% for d in discounts %}
+            <tr id="discrow-{{ d.id }}">
+              <td><div style="font-weight:600">{{ d.name }}</div><div style="font-size:11px;color:var(--sub)">{{ d.description }}</div></td>
+              <td><span class="badge badge-amber">{{ d.percent }}% OFF</span></td>
+              <td style="font-size:12px;color:var(--sub)">{{ d.valid_from|default:"—" }}</td>
+              <td style="font-size:12px;color:var(--sub)">{{ d.valid_to|default:"—" }}</td>
+              <td>{% if d.is_active %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-red">Inactive</span>{% endif %}</td>
+              <td><div class="actions">
+                <button class="btn btn-edit btn-sm" onclick="openEditDiscModal({{ d.id }},'{{ d.name|escapejs }}',{{ d.percent }},'{{ d.valid_from|default:'' }}','{{ d.valid_to|default:'' }}','{{ d.description|escapejs }}',{{ d.is_active|yesno:'true,false' }})">✏️ Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="confirmDel('discount',{{ d.id }},'{{ d.name|escapejs }}')">🗑</button>
+              </div></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── OFFER BANNERS SECTION ── -->
+    <div class="section" id="sec-offers">
+      <div class="content">
+        <div style="font-size:12px;color:var(--sub);margin-bottom:12px;">🎉 These banners are shown to customers at the top of the menu page. Toggle Active to show or hide a banner.</div>
+        <table class="data-table">
+          <thead><tr><th>Preview</th><th>Title</th><th>Type</th><th>Discount</th><th>Items</th><th>Runs</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="offerBody">
+            {% for o in offers %}
+            <tr id="offerrow-{{ o.id }}">
+              <td>
+                {% if o.image_url %}<img src="{{ o.image_url }}" style="width:60px;height:40px;object-fit:cover;border-radius:6px;"/>
+                {% else %}<span style="display:inline-flex;align-items:center;gap:6px;background:{{ o.bg_color }};color:white;padding:5px 12px;border-radius:8px;font-weight:700;white-space:nowrap;font-size:12px;">{{ o.emoji }} {{ o.offer_label }}</span>{% endif %}
+              </td>
+              <td><div style="font-weight:600">{{ o.title }}</div><div style="font-size:10px;color:var(--sub)">{{ o.subtitle|default:"" }}</div></td>
+              <td><span class="badge badge-amber">{% if o.offer_type == 'bogo' %}1+1{% elif o.offer_type == 'flat' %}Flat ₹{% else %}% OFF{% endif %}</span></td>
+              <td style="font-weight:700;color:var(--green,#2ecc71);">{{ o.offer_label }}</td>
+              <td style="font-size:11px;color:var(--sub);">{{ o.menu_items.count }} item{{ o.menu_items.count|pluralize }}</td>
+              <td>{% if o.is_active %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-red">Hidden</span>{% endif %}</td>
+              <td><div class="actions">
+                <button class="btn btn-edit btn-sm" onclick="openEditOfferModal({{ o.id }},'{{ o.title|escapejs }}','{{ o.subtitle|escapejs }}','{{ o.offer_type }}',{{ o.off_percent }},{{ o.flat_amount }},'{{ o.emoji|escapejs }}','{{ o.bg_color|escapejs }}','{{ o.image_url|escapejs }}',{{ o.is_active|yesno:'true,false' }},{{ o.order }},[{% for mi in o.menu_items.all %}{{ mi.id }}{% if not forloop.last %},{% endif %}{% endfor %}],'{{ o.valid_from|date:"Y-m-d" }}','{{ o.valid_to|date:"Y-m-d" }}')">✏️ Edit</button>
+                <button class="btn btn-sm" style="background:rgba(243,156,18,.14);color:#b9770e;" onclick="toggleOffer({{ o.id }},this)">{% if o.is_active %}Hide{% else %}Show{% endif %}</button>
+                <button class="btn btn-danger btn-sm" onclick="confirmDel('offer',{{ o.id }},'{{ o.title|escapejs }}')">🗑</button>
+              </div></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" style="text-align:center;color:var(--sub);padding:28px;">No offer banners yet — click <b>+ Add Offer</b> above.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── CART OFFERS SECTION ── -->
+    <div class="section" id="sec-cartoffers">
+      <div class="content">
+        <div style="font-size:12px;color:var(--sub);margin-bottom:12px;">🛒 Conditional cart offers — shown to customers when their cart total reaches the minimum. Use these to drive upsell (e.g. Spend ₹600 → 20% off, or get Free Rose Milk above ₹500).</div>
+        <table class="data-table">
+          <thead><tr><th>Offer</th><th>Min Cart ₹</th><th>Reward</th><th>Runs</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="cartOfferBody">
+            {% for co in cart_offers %}
+            <tr id="corow-{{ co.id }}">
+              <td><div style="font-weight:700">{{ co.emoji }} {{ co.title }}</div><div style="font-size:11px;color:var(--sub)">{{ co.subtitle|default:"" }}</div></td>
+              <td><span class="badge badge-amber">≥₹{{ co.min_cart_value|floatformat:0 }}</span></td>
+              <td><span class="badge badge-green">{{ co.reward_label }}</span></td>
+              <td>{% if co.is_active %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-red">Off</span>{% endif %}</td>
+              <td><div class="actions">
+                <button class="btn btn-edit btn-sm" onclick="openEditCartOfferModal({{ co.id }},'{{ co.title|escapejs }}','{{ co.subtitle|escapejs }}',{{ co.min_cart_value }},'{{ co.reward_type }}',{{ co.percent_off }},{{ co.flat_off }},{% if co.free_item %}{{ co.free_item.id }}{% else %}null{% endif %},'{{ co.emoji|escapejs }}',{{ co.is_active|yesno:'true,false' }},{{ co.order }},'{{ co.valid_from|date:"Y-m-d" }}','{{ co.valid_to|date:"Y-m-d" }}')">✏️ Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="confirmDel('co',{{ co.id }},'{{ co.title|escapejs }}')">🗑</button>
+              </div></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align:center;color:var(--sub);padding:28px;">No cart offers yet — click <b>+ Add Cart Offer</b> above.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── TABLES SECTION ── -->
+    <div class="section" id="sec-tables">
+      <div class="content">
+        <table class="data-table">
+          <thead><tr><th>#</th><th>Name</th><th>Capacity</th><th>Location</th><th>Status</th><th>Active</th><th>Actions</th></tr></thead>
+          <tbody id="tableBody">
+            {% for t in tables %}
+            <tr id="tablerow-{{ t.id }}">
+              <td style="font-weight:700;font-size:16px">{{ t.number }}</td>
+              <td style="font-weight:600">{{ t.name }}</td>
+              <td>{{ t.capacity }} seats</td>
+              <td style="font-size:12px;color:var(--sub)">{{ t.description|default:"—" }}</td>
+              <td><span class="badge {% if t.status == 'available' %}badge-green{% elif t.status == 'occupied' %}badge-red{% else %}badge-amber{% endif %}">{{ t.status|title }}</span></td>
+              <td>{% if t.is_active %}<span class="badge badge-green">Yes</span>{% else %}<span class="badge badge-red">No</span>{% endif %}</td>
+              <td><div class="actions">
+                <button class="btn btn-edit btn-sm" onclick="openEditTableModal({{ t.id }},{{ t.number }},'{{ t.name|escapejs }}',{{ t.capacity }},'{{ t.description|escapejs }}',{{ t.is_active|yesno:'true,false' }})">✏️ Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="confirmDel('table',{{ t.id }},'{{ t.name|escapejs }}')">🗑</button>
+              </div></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── CUSTOMERS SECTION ── -->
+    <div class="section" id="sec-customers">
+      <div class="content">
+        <table class="data-table">
+          <thead><tr><th>Customer</th><th>Phone</th><th>Visits</th><th>Orders</th><th>Total Spent</th><th>Last Visit</th></tr></thead>
+          <tbody>
+            {% for c in customers %}
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px">
+                <div class="cust-avatar">{{ c.name|first|upper }}</div>
+                <span style="font-weight:600">{{ c.name }}</span>
+              </div></td>
+              <td style="font-family:monospace;color:var(--sub)">{{ c.phone }}</td>
+              <td><span class="badge badge-blue">{{ c.visit_count }}</span></td>
+              <td>{{ c.total_orders }}</td>
+              <td style="font-weight:700;color:var(--acc)">₹{{ c.total_spent|floatformat:0 }}</td>
+              <td style="font-size:12px;color:var(--sub)">{{ c.last_visit|date:"d M Y" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── ORDERS SECTION ── -->
+    <div class="section" id="sec-orders">
+      <div class="filter-bar">
+        <div class="search-box" style="max-width:280px"><span class="sicon">🔍</span><input type="text" placeholder="Search order #, customer…" oninput="filterOrders(this.value)"/></div>
+        <div class="filter-tabs">
+          <div class="ftab active" onclick="loadOrders('',this)">All</div>
+          <div class="ftab" onclick="loadOrders('pending',this)">Pending</div>
+          <div class="ftab" onclick="loadOrders('preparing',this)">Preparing</div>
+          <div class="ftab" onclick="loadOrders('completed',this)">Completed</div>
+          <div class="ftab" onclick="loadOrders('cancelled',this)">Cancelled</div>
+        </div>
+      </div>
+      <div class="content" style="padding-top:0">
+        <table class="data-table">
+          <thead><tr><th>Order #</th><th>Customer</th><th>Table</th><th>Type</th><th>Total</th><th>Status</th><th>Payment</th><th>Date</th></tr></thead>
+          <tbody id="ordersBody">
+            {% for o in orders_qs|default:'' %}{% endfor %}
+          </tbody>
+        </table>
+        <div id="ordersEmpty" style="display:none" class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">Loading orders…</div></div>
+      </div>
+    </div>
+
+    <!-- ── SHOP SETTINGS SECTION ── -->
+    <div class="section" id="sec-shop">
+      <div class="content">
+        <div class="settings-card">
+          <div class="fgrid">
+            <div class="frow">
+              <div class="fg"><label>Shop Name <span>*</span></label><input class="fi" id="ss_name" type="text" value="{{ shop.shop_name|default:'Brothers Cafe' }}"/></div>
+              <div class="fg"><label>Location</label><input class="fi" id="ss_loc" type="text" value="{{ shop.location|default:'' }}"/></div>
+            </div>
+            <div class="frow">
+              <div class="fg"><label>Phone</label><input class="fi" id="ss_phone" type="text" value="{{ shop.phone|default:'' }}"/></div>
+              <div class="fg"><label>Email</label><input class="fi" id="ss_email" type="email" value="{{ shop.email|default:'' }}"/></div>
+            </div>
+            <div class="fg"><label>Address</label><textarea class="fta" id="ss_addr" style="min-height:60px">{{ shop.address|default:'' }}</textarea></div>
+            <div class="frow">
+              <div class="fg"><label>GSTIN</label><input class="fi" id="ss_gstin" type="text" value="{{ shop.gstin|default:'' }}"/></div>
+              <div class="fg"><label>FSSAI Number</label><input class="fi" id="ss_fssai" type="text" value="{{ shop.fssai_number|default:'' }}"/></div>
+            </div>
+            <div class="fg"><label>UPI ID</label><input class="fi" id="ss_upi" type="text" value="{{ shop.upi_id|default:'' }}" placeholder="e.g. brotherscafe@upi"/></div>
+            <div class="frow">
+              <div class="fg"><label>Default Discount %</label><input class="fi" id="ss_disc" type="number" min="0" max="100" step="0.5" value="{{ shop.default_discount_percent|default:0 }}"/></div>
+              <div class="fg" style="grid-column:1/-1">
+                <label>Cafe Logo</label>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                  {% if shop.logo %}<img src="{{ shop.logo.url }}" id="ssLogoPrev" style="width:64px;height:64px;object-fit:contain;border:1px solid var(--border);border-radius:8px;background:#fff;padding:3px">
+                  {% else %}<img id="ssLogoPrev" style="display:none;width:64px;height:64px;object-fit:contain;border:1px solid var(--border);border-radius:8px;background:#fff;padding:3px">{% endif %}
+                  <input class="fi" id="ss_logo" type="file" accept="image/*" onchange="previewShopLogo()" style="padding:8px;flex:1;min-width:180px"/>
+                </div>
+                <div style="font-size:10.5px;color:var(--muted);margin-top:4px">Shown on the customer bill, the printed bill and the POS receipt. Square images work best.</div>
+              </div>
+              <div class="fg"><label>Default Parcel Charge (₹)</label><input class="fi" id="ss_parcel" type="number" min="0" step="0.5" value="{{ shop.default_parcel_charge|default:0 }}"/></div>
+              <div style="grid-column:1/-1;border-top:1px solid var(--border);margin:10px 0 2px;padding-top:14px">
+                <div style="font-size:12px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--sub);margin-bottom:4px">💧 Water bottle quick-add</div>
+                <div style="font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:10px">A one-tap card shown in the customer's cart. Choose exactly which item it adds — otherwise it is hidden.</div>
+              </div>
+              <div class="fg" style="grid-column:1/-1">
+                <div class="sw-row" onclick="toggleSw('sw_wb','ss_wb_on')" style="margin-bottom:10px">
+                  <div class="sw {% if shop.show_water_bottle_in_cart %}on{% endif %}" id="sw_wb"></div>
+                  <span class="sw-label">Show the water bottle card in the cart</span>
+                </div>
+                <input type="hidden" id="ss_wb_on" value="{{ shop.show_water_bottle_in_cart|yesno:'true,false' }}"/>
+              </div>
+              <div class="fg">
+                <label>Price shown on the card (₹)</label>
+                <input class="fi" id="ss_wb_price" type="number" min="0" step="0.5" value="{{ shop.water_bottle_cart_price|default:0 }}"/>
+                <div style="font-size:10.5px;color:var(--muted);margin-top:4px">Leave 0 to use the item's own menu price.</div>
+              </div>
+              <div class="fg">
+                <label>Item being used</label>
+                <div style="padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:13px">
+                  {% if water_candidates %}💧 <b>{{ water_candidates.0.name }}</b> — ₹{{ water_candidates.0.price|floatformat:0 }}{% else %}<span style="color:var(--muted)">No water bottle item found</span>{% endif %}
+                </div>
+              </div>
+
+            </div>
+            <div style="display:flex;justify-content:flex-end;padding-top:4px">
+              <button class="btn btn-primary" onclick="saveShopSettings()">💾 Save Settings</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CATEGORY ORDER SECTION ── -->
+    <div class="section" id="sec-cat-order" style="display:none">
+      <div class="content">
+        <div class="order-info-bar">
+          ↕️ <strong>Drag rows</strong> to change the display order of categories on the menu. Click <strong>Save Order</strong> when done.
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+          <button class="save-order-btn" id="saveCatOrderBtn" onclick="saveCatOrder()">💾 Save Order</button>
+        </div>
+        <table class="drag-table" id="catOrderTable">
+          <thead>
+            <tr>
+              <th style="width:40px"></th>
+              <th style="width:50px">Icon</th>
+              <th>Name</th>
+              <th>Items</th>
+              <th style="width:80px">Order</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="catOrderBody">
+            {% for cat in categories %}
+            <tr draggable="true" data-id="{{ cat.id }}" class="cat-order-row">
+              <td><span class="drag-handle" title="Drag to reorder">⠿</span></td>
+              <td style="font-size:22px">{{ cat.icon|default:"🍽️" }}</td>
+              <td>
+                <div style="font-weight:600">{{ cat.name }}</div>
+                <div style="font-size:11px;color:var(--sub)">{{ cat.description|truncatechars:40 }}</div>
+              </td>
+              <td><span class="badge badge-blue">{{ cat.items.count }} items</span></td>
+              <td><span class="order-num-badge co-badge">{{ cat.order }}</span></td>
+              <td>
+                {% if cat.is_active %}
+                  <span style="color:#22c55e;font-size:12px;font-weight:600">● Active</span>
+                {% else %}
+                  <span style="color:#94a3b8;font-size:12px;font-weight:600">○ Hidden</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="actions">
+                  <button class="btn btn-edit btn-sm" onclick="openEditCatModal({{ cat.id }},'{{ cat.name|escapejs }}','{{ cat.icon|escapejs }}','{{ cat.description|escapejs }}',{{ cat.order }},{{ cat.is_active|yesno:'true,false' }})">✏️ Edit</button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── ITEMS ORDER SECTION ── -->
+    <div class="section" id="sec-items-order" style="display:none">
+      <div class="content">
+        <div class="order-info-bar">
+          🔢 First <strong>select a category</strong>, then <strong>drag rows</strong> to reorder items in that category. Click <strong>Save Order</strong> when done.
+        </div>
+        <div class="cat-select-wrap">
+          <label>Select Category</label>
+          <select class="cat-selector" id="itemsOrderCatSelect" onchange="loadItemsForOrder(this.value)">
+            <option value="">— Choose a category —</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}">{{ cat.icon|default:"🍽️" }} {{ cat.name }} ({{ cat.items.count }} items)</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div id="itemsOrderArea">
+          <div class="items-order-loading" id="itemsOrderPlaceholder">
+            ☝️ Select a category above to manage item ordering.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panel -->
+</div><!-- /app -->
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- HIDDEN SECTIONS: Category Order & Items Order              -->
+<!-- These are appended outside .panel so they take full width  -->
+<!-- They are shown via goSection() which moves them in JS      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<style>
+/* ── DRAG ORDER TABLE ── */
+.order-page{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.order-page.active{display:flex;}
+.order-topbar{
+  height:56px;background:#fff;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;
+}
+.order-topbar-title{font-size:18px;font-weight:800;color:var(--text)}
+.order-content{padding:24px;overflow-y:auto;flex:1;}
+.order-info-bar{
+  background:#fff8f0;border:1px solid #fde8d0;border-radius:8px;
+  padding:10px 16px;margin-bottom:20px;font-size:13px;color:#92400e;display:flex;align-items:center;gap:8px;
+}
+.drag-table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.07);border:1px solid var(--border)}
+.drag-table th{background:#fafaf8;border-bottom:1px solid var(--border);padding:11px 14px;font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;text-align:left}
+.drag-table td{padding:13px 14px;border-bottom:1px solid #f5f5f0;font-size:13px;vertical-align:middle}
+.drag-table tr:last-child td{border-bottom:none}
+.drag-table tr.dragging{opacity:.35;background:#fff4f0;}
+.drag-table tr.drag-over{background:#fff4f0;border-top:2px solid var(--acc);}
+.drag-handle{cursor:grab;color:var(--muted);font-size:18px;padding:0 4px;user-select:none;display:inline-block;}
+.drag-handle:active{cursor:grabbing;}
+.order-num-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:28px;height:28px;border-radius:50%;background:var(--acc);color:#fff;font-size:12px;font-weight:700;
+}
+.cat-select-wrap{margin-bottom:24px;}
+.cat-select-wrap label{display:block;font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.cat-selector{
+  padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;
+  font-size:14px;font-family:inherit;background:#fff;color:var(--text);
+  cursor:pointer;outline:none;min-width:260px;transition:.2s;
+}
+.cat-selector:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(203,75,22,.1);}
+.items-order-loading{text-align:center;padding:40px;color:var(--muted);font-size:13px;}
+.save-order-btn{
+  background:var(--acc);color:#fff;border:none;border-radius:8px;padding:10px 22px;
+  font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;transition:.15s;
+  display:flex;align-items:center;gap:8px;
+}
+.save-order-btn:hover{background:var(--acc2);}
+.save-order-btn:disabled{opacity:.5;cursor:not-allowed;}
+.badge-type{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-veg{background:#dcfce7;color:#166534;}
+.badge-nv{background:#fee2e2;color:#991b1b;}
+.badge-bev{background:#dbeafe;color:#1e40af;}
+.badge-vegan{background:#fef9c3;color:#713f12;}
+.avail-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;}
+.avail-yes{background:#22c55e;}
+.avail-no{background:#ef4444;}
+</style>
+
+<!-- INLINE OVERLAY SECTIONS — shown when user clicks sidebar items -->
+<script>
+// ── CSRF ──
+function csrf(){const m=document.cookie.match('(^|;)\\s*csrftoken\\s*=\\s*([^;]+)');return m?m.pop():'';}
+
+// ── TOAST ──
+let _tt;
+function toast(msg,type='ok'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show '+type;
+  clearTimeout(_tt);_tt=setTimeout(()=>t.className='toast',2800);
+}
+
+// ── SECTION NAVIGATION ──
+const SECTION_CONFIG={
+  'categories':  {title:'Categories',      addLabel:'+ Add Category',  modal:'catModal'},
+  'combos':      {title:'Combos',          addLabel:'+ Add Combo',     modal:'comboModal'},
+  'combooffers': {title:'Combo Offers',    addLabel:'+ Add Combo Offer', modal:'comboModal'},
+  'customers':   {title:'Customers',       addLabel:null},
+  'discounts':   {title:'Discounts',       addLabel:'+ Add Discount',    modal:'discModal'},
+  'offers':      {title:'Offer Banners',   addLabel:'+ Add Offer',       modal:'offerModal'},
+  'cartoffers':  {title:'Cart Offers',     addLabel:'+ Add Cart Offer',  modal:'cartOfferModal'},
+  'menu-items':  {title:'Menu Items',      addLabel:'+ Add Item',      modal:'itemModal'},
+  'orders':      {title:'Orders',          addLabel:null},
+  'shop':        {title:'Shop Settings',   addLabel:null},
+  'tables':      {title:'Tables',          addLabel:'+ Add Table',     modal:'tableModal'},
+  'cat-order':   {title:'Category Order',  addLabel:null},
+  'items-order': {title:'Menu Items Order',addLabel:null},
+};
+let _curSection='categories';
+
+// ════════════════════════════════════════
+// QUICK STATUS TOGGLE (inline button)
+// ════════════════════════════════════════
+async function quickToggleStatus(type, id, btn) {
+  btn.disabled = true;
+  const url = type === 'category'
+    ? `/manage/api/categories/${id}/toggle/`
+    : `/manage/api/combos/${id}/toggle/`;
+  try {
+    const r = await fetch(url, { method: 'POST', headers: { 'X-CSRFToken': csrf() } });
+    const d = await r.json();
+    if (d.success) {
+      const isNowActive = d.is_active;
+      btn.classList.toggle('st-on', isNowActive);
+      btn.classList.toggle('st-off', !isNowActive);
+      btn.textContent = isNowActive ? '● Active' : '○ Hidden';
+      toast(isNowActive ? '✅ Activated!' : '○ Hidden from menu');
+    } else {
+      toast(d.error || 'Failed to update', 'err');
+    }
+  } catch(e) {
+    toast('Network error', 'err');
+  }
+  btn.disabled = false;
+}
+
+function goSection(name, el){
+  // hide all
+  document.querySelectorAll('.section').forEach(s=>s.style.display='none');
+  document.querySelectorAll('.sb-item').forEach(s=>s.classList.remove('active'));
+  // show target
+  const sec=document.getElementById('sec-'+name);
+  if(sec){ sec.style.display='flex'; }
+  if(el) el.classList.add('active');
+  _curSection=name;
+  // update topbar
+  const cfg=SECTION_CONFIG[name]||{};
+  document.getElementById('pageTitle').textContent=cfg.title||name;
+  const ab=document.getElementById('mainAddBtn');
+  if(cfg.addLabel){ab.textContent=cfg.addLabel;ab.style.display='flex';}
+  else ab.style.display='none';
+  // load dynamic sections
+  if(name==='orders') loadOrders('', document.querySelector('#sec-orders .ftab.active'));
+}
+
+// init — restore last section from sessionStorage (after item save), or default categories
+(function(){
+  document.querySelectorAll('.section').forEach(s=>s.style.display='none');
+  const savedSec = sessionStorage.getItem('mm_section') || 'categories';
+  sessionStorage.removeItem('mm_section');
+  _curSection = savedSec;
+  // Show the right section
+  const initSec = document.getElementById('sec-'+savedSec);
+  if(initSec){ initSec.style.display='flex'; }
+  else { document.getElementById('sec-categories').style.display='flex'; _curSection='categories'; }
+  // Highlight sidebar
+  document.querySelectorAll('.sb-item').forEach(s=>s.classList.remove('active'));
+  const sbEl = document.getElementById('sb-'+_curSection);
+  if(sbEl) sbEl.classList.add('active');
+  // Update topbar
+  const cfg2 = SECTION_CONFIG[_curSection]||{};
+  if(cfg2.title) document.getElementById('pageTitle').textContent = cfg2.title;
+  const ab2 = document.getElementById('mainAddBtn');
+  if(ab2){ if(cfg2.addLabel){ab2.textContent=cfg2.addLabel;ab2.style.display='flex';}else ab2.style.display='none'; }
+  if(_curSection==='orders') loadOrders('', document.querySelector('#sec-orders .ftab'));
+})();
+
+function openAddModal(){
+  const cfg=SECTION_CONFIG[_curSection];
+  if(!cfg||!cfg.modal)return;
+  if(_curSection==='menu-items') openAddItemModal();
+  else if(_curSection==='categories') openAddCatModal();
+  else if(_curSection==='combos') openAddComboModal(false);
+  else if(_curSection==='combooffers') openAddComboModal(true);
+  else if(_curSection==='discounts') openAddDiscModal();
+  else if(_curSection==='offers') openAddOfferModal();
+  else if(_curSection==='cartoffers') openAddCartOfferModal();
+  else if(_curSection==='tables') openAddTableModal();
+}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
+
+// ── SWITCH TOGGLE ──
+function toggleSw(swId,fieldId){
+  const sw=document.getElementById(swId);
+  const on=!sw.classList.contains('on');
+  sw.classList.toggle('on',on);
+  document.getElementById(fieldId).value=on?'true':'false';
+}
+function setSw(swId,fieldId,val){
+  document.getElementById(swId).classList.toggle('on',val);
+  document.getElementById(fieldId).value=val?'true':'false';
+}
+
+// ════════════════════════════════════════
+// MENU ITEMS
+// ════════════════════════════════════════
+let _editItemId=null;
+
+function openAddItemModal(){
+  _editItemId=null;
+  document.getElementById('itemModalTitle').textContent='Add Menu Item';
+  document.getElementById('itemSaveBtn').textContent='Add Item';
+  // reset
+  document.getElementById('f_iname').value='';
+  document.getElementById('f_iprice').value='';
+  document.getElementById('f_iparcel').value='';
+  document.getElementById('f_idesc').value='';
+  setItemType('veg');
+  setSw('sw_dine','f_idine',true);
+  setSw('sw_tk','f_itk',true);
+  setSw('sw_feat','f_ifeat',false);
+  setSw('sw_wbi','f_iwb',false);
+  clearItemImg();
+  openModal('itemModal');
+}
+
+async function openEditItemModal(id){
+  _editItemId=id;
+  document.getElementById('itemModalTitle').textContent='Edit Item';
+  document.getElementById('itemSaveBtn').textContent='Save Changes';
+  clearItemImg();
+  openModal('itemModal');
+  try{
+    const r=await fetch(`/staff/items/${id}/get/`);
+    const d=await r.json();
+    document.getElementById('f_iname').value=d.name;
+    document.getElementById('f_icat').value=d.category_id;
+    document.getElementById('f_iprice').value=d.price;
+    document.getElementById('f_iparcel').value=d.parcel_charge||0;
+    document.getElementById('f_idesc').value=d.description||'';
+    setItemType(d.item_type);
+    setSw('sw_dine','f_idine',d.is_available_dine_in);
+    setSw('sw_tk','f_itk',d.is_available_takeaway);
+    setSw('sw_feat','f_ifeat',d.is_featured);
+    setSw('sw_wbi','f_iwb',d.is_water_bottle);
+    if(d.image_url) showItemImgPreview(d.image_url);
+  }catch(e){toast('Failed to load item','err');}
+}
+
+function setItemType(val){
+  document.getElementById('f_itype').value=val;
+  document.querySelectorAll('#f_itype_grp .tg-opt').forEach(b=>b.classList.toggle('on',b.dataset.val===val));
+}
+function toggleItemSw(swId,fId){
+  const sw=document.getElementById(swId);
+  const on=!sw.classList.contains('on');
+  sw.classList.toggle('on',on);
+  document.getElementById(fId).value=on?'true':'false';
+}
+
+function previewItemImg(inp){if(inp.files[0])showItemImgPreview(URL.createObjectURL(inp.files[0]));}
+function showItemImgPreview(url){
+  const b=document.getElementById('itemImgBox');
+  const p=document.getElementById('itemImgPreview');
+  const ph=document.getElementById('itemImgPh');
+  const rm=document.getElementById('itemImgRemove');
+  p.src=url;p.style.display='block';ph.style.display='none';
+  rm.style.display='flex';b.classList.add('has-img');
+}
+function clearItemImg(){
+  document.getElementById('itemImgFile').value='';
+  document.getElementById('itemImgPreview').style.display='none';
+  document.getElementById('itemImgPh').style.display='';
+  document.getElementById('itemImgRemove').style.display='none';
+  document.getElementById('itemImgBox').classList.remove('has-img');
+}
+function removeItemImg(e){e.stopPropagation();clearItemImg();}
+
+async function saveItem(){
+  const btn=document.getElementById('itemSaveBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+  const fd=new FormData();
+  fd.append('name',document.getElementById('f_iname').value);
+  fd.append('category_id',document.getElementById('f_icat').value);
+  fd.append('price',document.getElementById('f_iprice').value);
+  fd.append('parcel_charge',document.getElementById('f_iparcel').value||0);
+  fd.append('item_type',document.getElementById('f_itype').value);
+  fd.append('description',document.getElementById('f_idesc').value);
+  fd.append('is_available_dine_in',document.getElementById('f_idine').value);
+  fd.append('is_available_takeaway',document.getElementById('f_itk').value);
+  fd.append('is_featured',document.getElementById('f_ifeat').value);
+  fd.append('is_water_bottle',document.getElementById('f_iwb').value);
+  const imgFile=document.getElementById('itemImgFile').files[0];
+  if(imgFile) fd.append('image',imgFile);
+  const url=_editItemId?`/staff/items/${_editItemId}/edit/`:'/staff/items/add/';
+  try{
+    const r=await fetch(url,{method:'POST',headers:{'X-CSRFToken':csrf()},body:fd});
+    const d=await r.json();
+    if(!d.success&&!d.item_id&&!d.name){toast(d.error||'Error','err');}
+    else{
+      if(d.image_warning){
+        toast('⚠️ '+d.image_warning,'err');
+      }else{
+        toast(_editItemId?'✅ Item updated!':'✅ Item added!');
+      }
+      closeModal('itemModal');
+      // Remember we're on menu-items so after reload we return here
+      sessionStorage.setItem('mm_section','menu-items');
+      setTimeout(()=>location.reload(),600);
+    }
+  }catch(e){toast('Network error','err');}
+  btn.disabled=false;btn.textContent=_editItemId?'Save Changes':'Add Item';
+}
+
+// ITEM CARD — QUICK ACTIONS
+async function savePrice(id){
+  const inp=document.getElementById('iprice-'+id);
+  const price=parseFloat(inp.value);
+  if(isNaN(price)||price<0){toast('Invalid price','err');return;}
+  const r=await fetch(`/staff/items/${id}/price/`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},body:JSON.stringify({price})});
+  const d=await r.json();
+  if(d.success) toast('💰 Price updated to ₹'+d.price.toFixed(2));
+  else toast(d.error||'Error','err');
+}
+
+async function toggleAvail(id,field,pill){
+  const r=await fetch(`/staff/items/${id}/toggle/`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},body:JSON.stringify({field})});
+  const d=await r.json();
+  if(!d.success){toast(d.error||'Error','err');return;}
+  const type=field==='dine_in'?'dine':'tk';
+  pill.className=`apill ${d.value?'on':'off'} ${type}`;
+  const dot=pill.querySelector('.adot');
+  if(dot)dot.style.background=d.value?(type==='dine'?'#2d9e5c':'#2563eb'):'#ccc';
+  toast(d.value?'✅ Enabled':'⛔ Disabled');
+}
+
+async function toggleFeat(id,btn){
+  const r=await fetch(`/staff/items/${id}/toggle/`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},body:JSON.stringify({field:'featured'})});
+  const d=await r.json();
+  if(!d.success){toast(d.error||'Error','err');return;}
+  btn.textContent=d.value?'⭐ Featured':'☆ Feature';
+  btn.classList.toggle('on',d.value);
+  toast(d.value?'⭐ Featured!':'Removed from Featured');
+}
+
+function filterItems(q){
+  q=q.toLowerCase();
+  document.querySelectorAll('#itemsGrid .item-card').forEach(c=>{
+    c.style.display=(!q||c.dataset.name.includes(q))?'':'none';
+  });
+}
+function filterItemCat(catId,el){
+  document.querySelectorAll('.filter-tabs .ftab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('#itemsGrid .item-card').forEach(c=>{
+    c.style.display=(!catId||c.dataset.cat===catId)?'':'none';
+  });
+}
+
+// ════════════════════════════════════════
+// CATEGORIES
+// ════════════════════════════════════════
+let _editCatId=null;
+function openAddCatModal(){
+  _editCatId=null;
+  document.getElementById('catModalTitle').textContent='Add Category';
+  document.getElementById('catSaveBtn').textContent='Save Category';
+  document.getElementById('f_cname').value='';
+  document.getElementById('f_cicon').value='';
+  document.getElementById('f_cdesc').value='';
+  document.getElementById('f_corder').value='0';
+  setSw('sw_cactive','f_cactive',true);
+  openModal('catModal');
+}
+function openEditCatModal(id,name,icon,desc,order,active){
+  _editCatId=id;
+  document.getElementById('catModalTitle').textContent='Edit Category';
+  document.getElementById('catSaveBtn').textContent='Save Changes';
+  document.getElementById('f_cname').value=name;
+  document.getElementById('f_cicon').value=icon;
+  document.getElementById('f_cdesc').value=desc;
+  document.getElementById('f_corder').value=order;
+  setSw('sw_cactive','f_cactive',active);
+  openModal('catModal');
+}
+async function saveCategory(){
+  const btn=document.getElementById('catSaveBtn');
+  const name=document.getElementById('f_cname').value.trim();
+  if(!name){toast('Name required','err');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+  const url=_editCatId?`/manage/api/categories/${_editCatId}/save/`:'/manage/api/categories/save/';
+  const body={name,icon:document.getElementById('f_cicon').value.trim(),description:document.getElementById('f_cdesc').value.trim(),order:parseInt(document.getElementById('f_corder').value||0),is_active:document.getElementById('f_cactive').value==='true'};
+  try{
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(d.success){
+      toast(_editCatId?'✅ Category updated!':'✅ Category added!');
+      closeModal('catModal');
+      if(_editCatId){
+        // Update existing row in-place
+        const row=document.getElementById('catrow-'+_editCatId);
+        if(row){
+          row.cells[0].textContent=body.icon||'🍽️';
+          row.cells[1].innerHTML='<div style="font-weight:600">'+body.name+'</div><div style="font-size:11px;color:var(--sub)">'+body.description+'</div>';
+          row.cells[3].textContent=body.order;
+          const sb=row.querySelector('.status-toggle-btn');
+          if(sb){sb.classList.toggle('st-on',body.is_active);sb.classList.toggle('st-off',!body.is_active);sb.textContent=body.is_active?'● Active':'○ Hidden';}
+        }
+      } else {
+        // New category — reload to show it (only case where reload is needed)
+        setTimeout(()=>location.reload(),600);
+      }
+    } else toast(d.error||'Error','err');
+  }catch(e){toast('Network error','err');}
+  btn.disabled=false;btn.textContent=_editCatId?'Save Changes':'Save Category';
+}
+
+// ════════════════════════════════════════
+// COMBOS
+
+// ════════ COMBO BUILDER ════════════════════════════════════════════
+// Staff pick the menu items that make up a combo and set its fixed price.
+// Before this, a combo could be given a name and a price but its contents
+// could only be set from Django admin.
+const CB_ITEMS = JSON.parse(document.getElementById('picker-items').textContent || '[]');
+let cbPicked = {};   // { menu_item_id: quantity }
+
+function cbInitCats(){
+  const sel = document.getElementById('cbCat');
+  if (!sel || sel.dataset.ready) return;
+  const cats = [...new Set(CB_ITEMS.map(i => i.category))].sort();
+  cats.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c; sel.appendChild(o);
+  });
+  sel.dataset.ready = '1';
+}
+
+function cbRenderPool(){
+  const box = document.getElementById('cbPool');
+  if (!box) return;
+  const q   = (document.getElementById('cbSearch').value || '').trim().toLowerCase();
+  const cat = document.getElementById('cbCat').value;
+  const rows = CB_ITEMS.filter(i =>
+    (!cat || i.category === cat) && (!q || i.name.toLowerCase().includes(q)));
+  if (!rows.length) { box.innerHTML = '<div class="cb-empty">No items match that search.</div>'; return; }
+  box.innerHTML = rows.map(i => {
+    const on = cbPicked[i.id] ? ' picked' : '';
+    return '<div class="cb-item' + on + '" onclick="cbAdd(' + i.id + ')">'
+      + '<button type="button" class="cb-add" onclick="event.stopPropagation();cbAdd(' + i.id + ')">+</button>'
+      + '<div class="cb-nm">' + cbEsc(i.name) + '<div class="cb-cat-tag">' + cbEsc(i.category) + '</div></div>'
+      + '<span class="cb-pr">₹' + Math.round(i.price) + '</span>'
+      + '</div>';
+  }).join('');
+}
+
+function cbRenderPicked(){
+  const box = document.getElementById('cbPicked');
+  if (!box) return;
+  const ids = Object.keys(cbPicked);
+  document.getElementById('cbCount').textContent = ids.length;
+  if (!ids.length) {
+    box.innerHTML = '<div class="cb-empty">Nothing added yet.<br/>Pick items from the left to build this combo.</div>';
+  } else {
+    box.innerHTML = ids.map(id => {
+      const it = CB_ITEMS.find(x => String(x.id) === String(id));
+      if (!it) return '';
+      const qty = cbPicked[id];
+      return '<div class="cb-sel">'
+        + '<div class="cb-nm">' + cbEsc(it.name) + '<div class="cb-cat-tag">₹' + Math.round(it.price)
+        + ' × ' + qty + ' = ₹' + Math.round(it.price * qty) + '</div></div>'
+        + '<div class="cb-qty">'
+        +   '<button type="button" class="cb-qb" onclick="cbQty(' + id + ',-1)">−</button>'
+        +   '<span class="cb-qv">' + qty + '</span>'
+        +   '<button type="button" class="cb-qb" onclick="cbQty(' + id + ',1)">+</button>'
+        + '</div>'
+        + '<button type="button" class="cb-rm" onclick="cbRemove(' + id + ')" title="Remove">✕</button>'
+        + '</div>';
+    }).join('');
+  }
+  cbUpdateTotals();
+}
+
+function cbItemsValue(){
+  return Object.keys(cbPicked).reduce(function(sum, id){
+    const it = CB_ITEMS.find(x => String(x.id) === String(id));
+    return sum + (it ? it.price * cbPicked[id] : 0);
+  }, 0);
+}
+
+function cbUpdateTotals(){
+  const value = cbItemsValue();
+  const price = parseFloat(document.getElementById('f_coprice').value || 0) || 0;
+  const vEl = document.getElementById('cbValue');
+  const pEl = document.getElementById('cbPrice');
+  const sEl = document.getElementById('cbSaving');
+  if (!vEl) return;
+  vEl.textContent = '₹' + Math.round(value);
+  pEl.textContent = '₹' + Math.round(price);
+  if (!price) {
+    sEl.className = 'cb-save-pill cb-save-off'; sEl.textContent = 'Set a price';
+  } else if (price < value) {
+    const off = Math.round((1 - price / value) * 100);
+    sEl.className = 'cb-save-pill cb-save-on';
+    sEl.textContent = 'Customer saves ₹' + Math.round(value - price) + ' (' + off + '% off)';
+  } else if (price === value) {
+    sEl.className = 'cb-save-pill cb-save-off'; sEl.textContent = 'No saving vs buying separately';
+  } else {
+    sEl.className = 'cb-save-pill cb-save-off';
+    sEl.textContent = 'Costs ₹' + Math.round(price - value) + ' MORE than separate items';
+  }
+}
+
+function cbSuggestPrice(){
+  const v = cbItemsValue();
+  if (!v) { toast('Add some items first','err'); return; }
+  document.getElementById('f_coprice').value = Math.round(v);
+  cbUpdateTotals();
+}
+
+function cbAdd(id){ cbPicked[id] = (cbPicked[id] || 0) + 1; cbRenderPool(); cbRenderPicked(); }
+function cbQty(id, d){
+  cbPicked[id] = (cbPicked[id] || 0) + d;
+  if (cbPicked[id] <= 0) delete cbPicked[id];
+  cbRenderPool(); cbRenderPicked();
+}
+function cbRemove(id){ delete cbPicked[id]; cbRenderPool(); cbRenderPicked(); }
+function cbReset(items){
+  cbPicked = {};
+  (items || []).forEach(function(r){ cbPicked[r.menu_item_id] = r.quantity; });
+  cbInitCats();
+  const s = document.getElementById('cbSearch'); if (s) s.value = '';
+  const c = document.getElementById('cbCat');    if (c) c.value = '';
+  cbRenderPool(); cbRenderPicked();
+}
+function cbEsc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function previewShopLogo(){
+  const f=document.getElementById('ss_logo').files[0];
+  if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{ const img=document.getElementById('ssLogoPrev'); img.src=e.target.result; img.style.display=''; };
+  r.readAsDataURL(f);
+}
+
+function previewComboImg(){
+  const f=document.getElementById('f_coimage').files[0];
+  if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>showComboImgPreview(e.target.result);
+  r.readAsDataURL(f);
+}
+function showComboImgPreview(src){
+  const box=document.getElementById('coImgPreview');
+  document.getElementById('coImgPrev').src=src;
+  box.style.display='block';
+}
+function clearComboImgPreview(){
+  document.getElementById('coImgPreview').style.display='none';
+  document.getElementById('f_coimage').value='';
+  const rm=document.getElementById('f_coRemoveImg'); if(rm) rm.checked=false;
+}
+function cbPayload(){
+  return Object.keys(cbPicked).map(function(id){
+    return { menu_item_id: parseInt(id), quantity: cbPicked[id] };
+  });
+}
+
+let _editComboId=null;
+let _comboIsOffer=false;
+
+// One builder drives both tables. `isOffer` decides the title, the extra
+// offer fields, and which table the saved row belongs to.
+function cbSetOfferMode(isOffer){
+  _comboIsOffer=!!isOffer;
+  const box=document.getElementById('comboOfferFields');
+  if(box) box.style.display=_comboIsOffer?'block':'none';
+}
+
+function openAddComboModal(isOffer){
+  _editComboId=null;
+  cbSetOfferMode(isOffer);
+  document.getElementById('comboModalTitle').textContent=_comboIsOffer?'Add Combo Offer':'Add Combo';
+  document.getElementById('comboSaveBtn').textContent=_comboIsOffer?'Save Combo Offer':'Save Combo';
+  document.getElementById('f_cotag').value='';
+  document.getElementById('f_covfrom').value='';
+  document.getElementById('f_covto').value='';
+  clearComboImgPreview();
+  document.getElementById('f_coname').value='';
+  document.getElementById('f_coprice').value='';
+  document.getElementById('f_coicon').value='🎁';
+  document.getElementById('f_codesc').value='';
+  document.getElementById('f_coorder').value='0';
+  setSw('sw_coactive','f_coactive',true);
+  cbReset([]);
+  openModal('comboModal');
+}
+async function openEditComboModal(id,name,desc,price,icon,order,active,isOffer){
+  _editComboId=id;
+  cbSetOfferMode(isOffer);
+  cbReset([]);
+  clearComboImgPreview();
+  document.getElementById('f_cotag').value='';
+  document.getElementById('f_covfrom').value='';
+  document.getElementById('f_covto').value='';
+  // Pull this combo's current contents so editing doesn't silently wipe them.
+  try {
+    const r = await fetch('/manage/api/combos/');
+    const d = await r.json();
+    const mine = (d.combos || []).find(function(c){ return c.id === id; });
+    if (mine) {
+      cbReset(mine.items.map(function(i){
+        return { menu_item_id: i.menu_item_id, quantity: i.quantity };
+      }));
+      cbSetOfferMode(mine.is_offer);
+      if(mine.image) showComboImgPreview(mine.image);
+      document.getElementById('f_cotag').value=mine.offer_tag||'';
+      document.getElementById('f_covfrom').value=mine.valid_from||'';
+      document.getElementById('f_covto').value=mine.valid_to||'';
+    }
+  } catch(e) { /* picker just starts empty */ }
+  document.getElementById('comboModalTitle').textContent=_comboIsOffer?'Edit Combo Offer':'Edit Combo';
+  document.getElementById('comboSaveBtn').textContent='Save Changes';
+  document.getElementById('f_coname').value=name;
+  document.getElementById('f_coprice').value=price;
+  document.getElementById('f_coicon').value=icon;
+  document.getElementById('f_codesc').value=desc;
+  document.getElementById('f_coorder').value=order;
+  setSw('sw_coactive','f_coactive',active);
+  cbUpdateTotals();
+  openModal('comboModal');
+}
+async function saveCombo(){
+  const btn=document.getElementById('comboSaveBtn');
+  const name=document.getElementById('f_coname').value.trim();
+  if(!name){toast('Name required','err');return;}
+  const url=_editComboId?`/manage/api/combos/${_editComboId}/save/`:'/manage/api/combos/save/';
+  const items=cbPayload();
+  if(!items.length){toast('Pick at least one item for this combo','err');return;}
+  const price=parseFloat(document.getElementById('f_coprice').value||0);
+  if(!(price>0)){toast('Set a combo price','err');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+  const body={
+    name, price,
+    is_offer:_comboIsOffer,
+    is_active:document.getElementById('f_coactive').value==='true',
+    icon:document.getElementById('f_coicon').value.trim(),
+    description:document.getElementById('f_codesc').value.trim(),
+    order:parseInt(document.getElementById('f_coorder').value||0),
+    offer_tag:_comboIsOffer?document.getElementById('f_cotag').value.trim():'',
+    valid_from:_comboIsOffer?document.getElementById('f_covfrom').value:'',
+    valid_to:_comboIsOffer?document.getElementById('f_covto').value:''};
+  // FormData so an image can ride along with the rest of the fields.
+  const fd=new FormData();
+  Object.keys(body).forEach(k=>fd.append(k, body[k]===null?'':body[k]));
+  fd.append('items', JSON.stringify(items));
+  const imgIn=document.getElementById('f_coimage');
+  if(imgIn&&imgIn.files[0]) fd.append('image', imgIn.files[0]);
+  const rmImg=document.getElementById('f_coRemoveImg');
+  if(rmImg&&rmImg.checked) fd.append('remove_image','true');
+  try{
+    const r=await fetch(url,{method:'POST',headers:{'X-CSRFToken':csrf()},body:fd});
+    const d=await r.json();
+    if(d.success){
+      const what=_comboIsOffer?'Combo offer':'Combo';
+      toast('✅ '+what+(_editComboId?' updated!':' added!'));
+      closeModal('comboModal');
+      // The two tables have different columns, and an edit can move a row from
+      // one to the other, so reload onto whichever section it now belongs to.
+      sessionStorage.setItem('mm_section', body.is_offer?'combooffers':'combos');
+      setTimeout(()=>location.reload(),600);
+    } else toast(d.error||'Error','err');
+  }catch(e){toast('Network error','err');}
+  btn.disabled=false;btn.textContent=_editComboId?'Save Changes':(_comboIsOffer?'Save Combo Offer':'Save Combo');
+}
+
+// ════════════════════════════════════════
+// DISCOUNTS
+// ════════════════════════════════════════
+let _editDiscId=null;
+function openAddDiscModal(){
+  _editDiscId=null;
+  document.getElementById('discModalTitle').textContent='Add Discount';
+  document.getElementById('discSaveBtn').textContent='Save Discount';
+  document.getElementById('f_dname').value='';
+  document.getElementById('f_dpct').value='';
+  document.getElementById('f_dfrom').value='';
+  document.getElementById('f_dto').value='';
+  document.getElementById('f_ddesc').value='';
+  setSw('sw_dactive','f_dactive',true);
+  openModal('discModal');
+}
+function openEditDiscModal(id,name,pct,vf,vt,desc,active){
+  _editDiscId=id;
+  document.getElementById('discModalTitle').textContent='Edit Discount';
+  document.getElementById('discSaveBtn').textContent='Save Changes';
+  document.getElementById('f_dname').value=name;
+  document.getElementById('f_dpct').value=pct;
+  document.getElementById('f_dfrom').value=vf;
+  document.getElementById('f_dto').value=vt;
+  document.getElementById('f_ddesc').value=desc;
+  setSw('sw_dactive','f_dactive',active);
+  openModal('discModal');
+}
+async function saveDiscount(){
+  const btn=document.getElementById('discSaveBtn');
+  const name=document.getElementById('f_dname').value.trim();
+  if(!name){toast('Name required','err');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+  const url=_editDiscId?`/manage/api/discounts/${_editDiscId}/save/`:'/manage/api/discounts/save/';
+  const body={name,percent:parseFloat(document.getElementById('f_dpct').value||0),valid_from:document.getElementById('f_dfrom').value,valid_to:document.getElementById('f_dto').value,description:document.getElementById('f_ddesc').value.trim(),is_active:document.getElementById('f_dactive').value==='true'};
+  try{
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(d.success){
+      toast(_editDiscId?'✅ Discount updated!':'✅ Discount added!');
+      closeModal('discModal');
+      if(_editDiscId){
+        const row=document.getElementById('discrow-'+_editDiscId);
+        if(row){
+          row.cells[0].innerHTML='<div style="font-weight:600">'+body.name+'</div><div style="font-size:11px;color:var(--sub)">'+body.description+'</div>';
+          row.cells[1].innerHTML='<span class="badge badge-amber">'+body.percent+'% OFF</span>';
+          row.cells[2].textContent=body.valid_from||'—';
+          row.cells[3].textContent=body.valid_to||'—';
+          const on=body.is_active;
+          row.cells[4].innerHTML='<span class="badge '+(on?'badge-green':'badge-red')+'">'+(on?'Active':'Inactive')+'</span>';
+        }
+      } else { setTimeout(()=>location.reload(),600); }
+    } else toast(d.error||'Error','err');
+  }catch(e){toast('Network error','err');}
+  btn.disabled=false;btn.textContent=_editDiscId?'Save Changes':'Save Discount';
+}
+
+// ════════════════════════════════════════
+// OFFER BANNERS
+// ════════════════════════════════════════
+let _editOfferId=null;
+function toggleOfferTypeFields(){
+  var t=document.getElementById('f_otype').value;
+  document.getElementById('fg_opct').style.display=t==='percent'?'':'none';
+  document.getElementById('fg_oflat').style.display=t==='flat'?'':'none';
+}
+function filterOfferItems(){
+  var q=document.getElementById('f_oItemSearch').value.toLowerCase();
+  document.querySelectorAll('.offer-item-label').forEach(function(el){
+    el.style.display=el.dataset.name.includes(q)?'flex':'none';
+  });
+}
+function getSelectedOfferItems(){
+  return Array.from(document.querySelectorAll('.offer-item-cb:checked')).map(function(cb){return parseInt(cb.value);});
+}
+function setSelectedOfferItems(ids){
+  document.querySelectorAll('.offer-item-cb').forEach(function(cb){
+    cb.checked=ids.includes(parseInt(cb.value));
+  });
+}
+function previewOfferImg(){
+  var fileInput=document.getElementById('f_oimage');
+  var urlInput=document.getElementById('f_oimg');
+  var prev=document.getElementById('oImgPreview');
+  var img=document.getElementById('oImgPrev');
+  if(fileInput&&fileInput.files[0]){
+    var reader=new FileReader();
+    reader.onload=function(e){img.src=e.target.result;prev.style.display='block';};
+    reader.readAsDataURL(fileInput.files[0]);
+  } else if(urlInput.value.trim()){
+    img.src=urlInput.value.trim();prev.style.display='block';
+  } else { prev.style.display='none'; }
+}
+document.getElementById('f_oimg').addEventListener('input',previewOfferImg);
+function openAddOfferModal(){
+  document.getElementById('f_ovfrom').value='';
+  document.getElementById('f_ovto').value='';
+  _editOfferId=null;
+  document.getElementById('offerModalTitle').textContent='Add Offer Banner';
+  document.getElementById('offerSaveBtn').textContent='Save Offer';
+  document.getElementById('f_otitle').value='';
+  document.getElementById('f_osub').value='';
+  document.getElementById('f_otype').value='percent';
+  document.getElementById('f_opct').value='';
+  document.getElementById('f_oflat').value='';
+  document.getElementById('f_oemoji').value='🎉';
+  document.getElementById('f_ocolor').value='#e74c3c';
+  document.getElementById('f_oimg').value='';
+  document.getElementById('oImgPreview').style.display='none';
+  document.getElementById('f_oorder').value='0';
+  document.getElementById('f_oItemSearch').value='';
+  filterOfferItems();
+  setSelectedOfferItems([]);
+  toggleOfferTypeFields();
+  setSw('sw_oactive','f_oactive',true);
+  openModal('offerModal');
+}
+function openEditOfferModal(id,title,sub,otype,pct,flat,emoji,color,imgUrl,active,order,itemIds,vfrom,vto){
+  document.getElementById('f_ovfrom').value=vfrom||'';
+  document.getElementById('f_ovto').value=vto||'';
+  _editOfferId=id;
+  document.getElementById('offerModalTitle').textContent='Edit Offer Banner';
+  document.getElementById('offerSaveBtn').textContent='Save Changes';
+  document.getElementById('f_otitle').value=title;
+  document.getElementById('f_osub').value=sub;
+  document.getElementById('f_otype').value=otype||'percent';
+  document.getElementById('f_opct').value=pct||'';
+  document.getElementById('f_oflat').value=flat||'';
+  document.getElementById('f_oemoji').value=emoji||'🎉';
+  document.getElementById('f_ocolor').value=color||'#e74c3c';
+  document.getElementById('f_oimg').value=imgUrl||'';
+  previewOfferImg();
+  document.getElementById('f_oorder').value=order||0;
+  document.getElementById('f_oItemSearch').value='';
+  filterOfferItems();
+  setSelectedOfferItems(itemIds||[]);
+  toggleOfferTypeFields();
+  setSw('sw_oactive','f_oactive',active);
+  openModal('offerModal');
+}
+async function saveOffer(){
+  const btn=document.getElementById('offerSaveBtn');
+  const title=document.getElementById('f_otitle').value.trim();
+  if(!title){toast('Title required','err');return;}
+  const otype=document.getElementById('f_otype').value;
+  const pct=parseFloat(document.getElementById('f_opct').value||0);
+  const flat=parseFloat(document.getElementById('f_oflat').value||0);
+  if(otype==='percent'&&(isNaN(pct)||pct<0||pct>100)){toast('OFF % must be 0–100','err');return;}
+  if(otype==='flat'&&(isNaN(flat)||flat<0)){toast('Flat amount must be positive','err');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+  const url=_editOfferId?`/manage/api/offers/${_editOfferId}/save/`:'/manage/api/offers/save/';
+  // Use FormData for image upload
+  var fd=new FormData();
+  fd.append('title',title);
+  fd.append('subtitle',document.getElementById('f_osub').value.trim());
+  fd.append('offer_type',otype);
+  fd.append('off_percent',pct);
+  fd.append('flat_amount',flat);
+  fd.append('emoji',document.getElementById('f_oemoji').value.trim()||'🎉');
+  fd.append('bg_color',document.getElementById('f_ocolor').value);
+  fd.append('image_url',document.getElementById('f_oimg').value.trim());
+  fd.append('order',parseInt(document.getElementById('f_oorder').value||0));
+  fd.append('valid_from',document.getElementById('f_ovfrom').value||'');
+  fd.append('valid_to',document.getElementById('f_ovto').value||'');
+  fd.append('is_active',document.getElementById('f_oactive').value);
+  fd.append('menu_item_ids',JSON.stringify(getSelectedOfferItems()));
+  // Image file
+  var imgInput=document.getElementById('f_oimage');
+  if(imgInput&&imgInput.files[0]) fd.append('image',imgInput.files[0]);
+  if(document.getElementById('f_oRemoveImg')&&document.getElementById('f_oRemoveImg').checked) fd.append('remove_image','true');
+  try{
+    const r=await fetch(url,{method:'POST',headers:{'X-CSRFToken':csrf()},body:fd});
+    const d=await r.json();
+    if(d.success){
+      toast(_editOfferId?'✅ Offer updated!':'✅ Offer added!');
+      closeModal('offerModal');
+      sessionStorage.setItem('mm_section','offers');
+      setTimeout(()=>location.reload(),600);
+    } else toast(d.error||'Error','err');
+  }catch(e){toast('Network error','err');}
+  btn.disabled=false;btn.textContent=_editOfferId?'Save Changes':'Save Offer';
+}
+async function toggleOffer(id,btn){
+  if(btn)btn.disabled=true;
+  try{
+    const r=await fetch(`/manage/api/offers/${id}/toggle/`,{method:'POST',headers:{'X-CSRFToken':csrf()}});
+    const d=await r.json();
+    if(d.success){
+      toast(d.is_active?'✅ Offer visible to customers!':'○ Offer hidden');
+      sessionStorage.setItem('mm_section','offers');
+      setTimeout(()=>location.reload(),500);
+    } else toast(d.error||'Error','err');
+  }catch(e){toast('Network error','err');}
+  if(btn)btn.disabled=false;
+}
+
+// ════════════════════════════════════════
+// CART OFFERS
+// ════════════════════════════════════════
+let _editCartOfferId=null;
+function toggleCartOfferReward(){
+  var t=document.getElementById('cof_rtype').value;
+  document.getElementById('cof_pct_row').style.display=t==='percent'?'':'none';
+  document.getElementById('cof_flat_row').style.display=t==='flat'?'':'none';
+  document.getElementById('cof_item_row').style.display=t==='free_item'?'':'none';
+}
+function openAddCartOfferModal(){
+  _editCartOfferId=null;
+  document.getElementById('cartOfferModalTitle').textContent='Add Cart Offer';
+  document.getElementById('cartOfferSaveBtn').textContent='Save Offer';
+  document.getElementById('cof_title').value='';
+  document.getElementById('cof_sub').value='';
+  document.getElementById('cof_min').value='';
+  document.getElementById('cof_rtype').value='percent';
+  document.getElementById('cof_pct').value='';
+  document.getElementById('cof_flat').value='';
+  document.getElementById('cof_item').value='';
+  document.getElementById('cof_emoji').value='🎁';
+  document.getElementById('cof_order').value='0';
+  document.getElementById('cof_vfrom').value='';
+  document.getElementById('cof_vto').value='';
+  setSw('sw_cof_active','cof_active',true);
+  toggleCartOfferReward();
+  openModal('cartOfferModal');
+}
+function openEditCartOfferModal(id,title,sub,min,rtype,pct,flat,itemId,emoji,active,order,vfrom,vto){
+  _editCartOfferId=id;
+  document.getElementById('cof_vfrom').value=vfrom||'';
+  document.getElementById('cof_vto').value=vto||'';
+  document.getElementById('cartOfferModalTitle').textContent='Edit Cart Offer';
+  document.getElementById('cartOfferSaveBtn').textContent='Save Changes';
+  document.getElementById('cof_title').value=title;
+  document.getElementById('cof_sub').value=sub;
+  document.getElementById('cof_min').value=min;
+  document.getElementById('cof_rtype').value=rtype||'percent';
+  document.getElementById('cof_pct').value=pct||'';
+  document.getElementById('cof_flat').value=flat||'';
+  document.getElementById('cof_item').value=itemId||'';
+  document.getElementById('cof_emoji').value=emoji||'🎁';
+  document.getElementById('cof_order').value=order||0;
+  setSw('sw_cof_active','cof_active',active);
+  toggleCartOfferReward();
+  openModal('cartOfferModal');
+}
+async function saveCartOffer(){
+  const btn=document.getElementById('cartOfferSaveBtn');
+  const title=document.getElementById('cof_title').value.trim();
+  const min=parseFloat(document.getElementById('cof_min').value||0);
+  if(!title){toast('Title required','err');return;}
+  if(isNaN(min)||min<0){toast('Min cart value required','err');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+  const url=_editCartOfferId?`/manage/api/cart-offers/${_editCartOfferId}/save/`:'/manage/api/cart-offers/save/';
+  const body={
+    title, subtitle:document.getElementById('cof_sub').value.trim(),
+    min_cart_value:min,
+    reward_type:document.getElementById('cof_rtype').value,
+    percent_off:parseFloat(document.getElementById('cof_pct').value||0),
+    flat_off:parseFloat(document.getElementById('cof_flat').value||0),
+    free_item_id:document.getElementById('cof_item').value||null,
+    emoji:document.getElementById('cof_emoji').value.trim()||'🎁',
+    order:parseInt(document.getElementById('cof_order').value||0),
+    is_active:document.getElementById('cof_active').value==='true',
+    valid_from:document.getElementById('cof_vfrom').value||'',
+    valid_to:document.getElementById('cof_vto').value||''
+  };
+  try{
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(d.success){toast(_editCartOfferId?'✅ Cart offer updated!':'✅ Cart offer added!');closeModal('cartOfferModal');sessionStorage.setItem('mm_section','cartoffers');setTimeout(()=>location.reload(),600);}
+    else toast(d.error||'Error','err');
+  }catch(e){toast('Network error','err');}
+  btn.disabled=false;btn.textContent=_editCartOfferId?'Save Changes':'Save Offer';
+}
+
+// ════════════════════════════════════════
+// TABLES
+// ════════════════════════════════════════
+let _editTableId=null;
+function openAddTableModal(){
+  _editTableId=null;
+  document.getElementById('tableModalTitle').textContent='Add Table';
+  document.getElementById('tableSaveBtn').textContent='Save Table';
+  document.getElementById('f_tnum').value='';
+  document.getElementById('f_tcap').value='4';
+  document.getElementById('f_tname').value='';
+  document.getElementById('f_tdesc').value='';
+  setSw('sw_tactive','f_tactive',true);
+  openModal('tableModal');
+}
+function openEditTableModal(id,num,name,cap,desc,active){
+  _editTableId=id;
+  document.getElementById('tableModalTitle').textContent='Edit Table';
+  document.getElementById('tableSaveBtn').textContent='Save Changes';
+  document.getElementById('f_tnum').value=num;
+  document.getElementById('f_tcap').value=cap;
+  document.getElementById('f_tname').value=name;
+  document.getElementById('f_tdesc').value=desc;
+  setSw('sw_tactive','f_tactive',active);
+  openModal('tableModal');
+}
+async function saveTable(){
+  const btn=document.getElementById('tableSaveBtn');
+  const name=document.getElementById('f_tname').value.trim();
+  if(!name){toast('Name required','err');return;}
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+  const url=_editTableId?`/manage/api/tables/${_editTableId}/save/`:'/manage/api/tables/save/';
+  const body={number:parseInt(document.getElementById('f_tnum').value||1),name,capacity:parseInt(document.getElementById('f_tcap').value||4),description:document.getElementById('f_tdesc').value.trim(),is_active:document.getElementById('f_tactive').value==='true'};
+  try{
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(d.success){
+      toast(_editTableId?'✅ Table updated!':'✅ Table added!');
+      closeModal('tableModal');
+      if(_editTableId){
+        const row=document.getElementById('tablerow-'+_editTableId);
+        if(row){
+          row.cells[0].textContent=body.number;
+          row.cells[1].textContent=body.name;
+          row.cells[2].textContent=body.capacity+' seats';
+          row.cells[3].textContent=body.description||'—';
+          const on=body.is_active;
+          row.cells[5].innerHTML='<span class="badge '+(on?'badge-green':'badge-red')+'">'+(on?'Yes':'No')+'</span>';
+        }
+      } else { setTimeout(()=>location.reload(),600); }
+    } else toast(d.error||'Error','err');
+  }catch(e){toast('Network error','err');}
+  btn.disabled=false;btn.textContent=_editTableId?'Save Changes':'Save Table';
+}
+
+// ════════════════════════════════════════
+// SHOP SETTINGS
+// ════════════════════════════════════════
+async function saveShopSettings(){
+  const body={
+    shop_name:document.getElementById('ss_name').value,
+    location:document.getElementById('ss_loc').value,
+    phone:document.getElementById('ss_phone').value,
+    email:document.getElementById('ss_email').value,
+    address:document.getElementById('ss_addr').value,
+    gstin:document.getElementById('ss_gstin').value,
+    fssai_number:document.getElementById('ss_fssai').value,
+    upi_id:document.getElementById('ss_upi').value,
+    default_discount_percent:parseFloat(document.getElementById('ss_disc').value||0),
+    default_parcel_charge:parseFloat(document.getElementById('ss_parcel').value||0),
+    show_water_bottle_in_cart:document.getElementById('ss_wb_on').value==='true',
+    water_bottle_cart_price:parseFloat(document.getElementById('ss_wb_price').value||0),
+  };
+  // FormData so the logo can be uploaded with the rest of the settings.
+  const fd=new FormData();
+  Object.keys(body).forEach(k=>fd.append(k, body[k]===null?'':body[k]));
+  const logoIn=document.getElementById('ss_logo');
+  if(logoIn&&logoIn.files[0]) fd.append('logo', logoIn.files[0]);
+  try{
+    const r=await fetch('/manage/api/shop/save/',{method:'POST',headers:{'X-CSRFToken':csrf()},body:fd});
+    const d=await r.json();
+    if(d.success){ toast('✅ Settings saved!'); if(logoIn&&logoIn.files[0]) setTimeout(()=>location.reload(),700); }
+    else toast(d.error||'Error','err');
+  }catch(e){toast('Network error','err');}
+}
+
+// ════════════════════════════════════════
+// ORDERS
+// ════════════════════════════════════════
+async function loadOrders(status,el){
+  if(el){document.querySelectorAll('#sec-orders .ftab').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
+  const r=await fetch(`/manage/api/orders/?status=${status}`);
+  const d=await r.json();
+  const tbody=document.getElementById('ordersBody');
+  tbody.innerHTML='';
+  if(!d.orders||!d.orders.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px">No orders found</td></tr>';return;}
+  d.orders.forEach(o=>{
+    const sc={pending:'os-pending',accepted:'os-accepted',preparing:'os-preparing',ready:'os-ready',completed:'os-completed',cancelled:'os-cancelled'}[o.status]||'';
+    tbody.innerHTML+=`<tr>
+      <td style="font-weight:700;font-family:monospace;font-size:12px">${o.order_number}</td>
+      <td><div style="font-weight:600">${o.customer_name}</div><div style="font-size:11px;color:var(--sub)">${o.customer_phone}</div></td>
+      <td style="font-size:12px">${o.table}</td>
+      <td><span class="badge ${o.order_type==='dine_in'?'badge-blue':'badge-green'}">${o.order_type==='dine_in'?'Dine-in':'Takeaway'}</span></td>
+      <td style="font-weight:700;color:var(--acc)">₹${o.total_amount.toFixed(2)}</td>
+      <td><span class="order-row-status ${sc}">${o.status}</span></td>
+      <td style="font-size:11px;color:var(--sub)">${o.payment_status}</td>
+      <td style="font-size:11px;color:var(--sub)">${o.created_at}</td>
+    </tr>`;
+  });
+}
+function filterOrders(q){
+  q=q.toLowerCase();
+  document.querySelectorAll('#ordersBody tr').forEach(r=>{
+    r.style.display=(!q||r.textContent.toLowerCase().includes(q))?'':'none';
+  });
+}
+
+// ════════════════════════════════════════
+// DRAG-AND-DROP ORDER — CATEGORIES
+// ════════════════════════════════════════
+(function initCatDrag(){
+  const tbody = document.getElementById('catOrderBody');
+  if(!tbody) return;
+  let dragging = null;
+
+  function getRows(){ return Array.from(tbody.querySelectorAll('tr[data-id]')); }
+
+  tbody.addEventListener('dragstart', function(e){
+    dragging = e.target.closest('tr[data-id]');
+    if(!dragging) return;
+    dragging.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  tbody.addEventListener('dragend', function(e){
+    if(dragging) dragging.classList.remove('dragging');
+    tbody.querySelectorAll('tr').forEach(r=>r.classList.remove('drag-over'));
+    dragging = null;
+    updateCatOrderBadges();
+  });
+  tbody.addEventListener('dragover', function(e){
+    e.preventDefault();
+    const row = e.target.closest('tr[data-id]');
+    if(!row || row===dragging) return;
+    tbody.querySelectorAll('tr').forEach(r=>r.classList.remove('drag-over'));
+    row.classList.add('drag-over');
+    const rect = row.getBoundingClientRect();
+    const mid = rect.top + rect.height/2;
+    if(e.clientY < mid) tbody.insertBefore(dragging, row);
+    else tbody.insertBefore(dragging, row.nextSibling);
+  });
+  tbody.addEventListener('drop', function(e){ e.preventDefault(); });
+})();
+
+function updateCatOrderBadges(){
+  document.querySelectorAll('#catOrderBody tr[data-id]').forEach(function(row, idx){
+    const badge = row.querySelector('.co-badge');
+    if(badge) badge.textContent = idx + 1;
+  });
+}
+
+async function saveCatOrder(){
+  const btn = document.getElementById('saveCatOrderBtn');
+  btn.disabled = true; btn.textContent = '⏳ Saving…';
+  const ids = Array.from(document.querySelectorAll('#catOrderBody tr[data-id]')).map(r=>parseInt(r.dataset.id));
+  try{
+    const r = await fetch('/manage/api/categories/reorder/', {
+      method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},
+      body: JSON.stringify({ids})
+    });
+    const d = await r.json();
+    if(d.success){ toast('✅ Category order saved!'); updateCatOrderBadges(); }
+    else toast(d.error||'Error saving order','err');
+  }catch(e){ toast('Network error','err'); }
+  btn.disabled = false; btn.innerHTML = '💾 Save Order';
+}
+
+// ════════════════════════════════════════
+// DRAG-AND-DROP ORDER — MENU ITEMS
+// ════════════════════════════════════════
+async function loadItemsForOrder(catId){
+  const area = document.getElementById('itemsOrderArea');
+  if(!catId){ area.innerHTML='<div class="items-order-loading">☝️ Select a category above to manage item ordering.</div>'; return; }
+  area.innerHTML = '<div class="items-order-loading">⏳ Loading items…</div>';
+  try{
+    const r = await fetch(`/manage/api/categories/${catId}/items/`);
+    const d = await r.json();
+    if(d.error){ area.innerHTML=`<div class="items-order-loading">❌ ${d.error}</div>`; return; }
+    if(!d.items.length){ area.innerHTML='<div class="items-order-loading">No items in this category yet.</div>'; return; }
+
+    const typeLabel = {veg:'Veg',nonveg:'Non-Veg',vegan:'Vegan',beverage:'Bev'};
+    const typeBadge = {veg:'badge-veg',nonveg:'badge-nv',vegan:'badge-vegan',beverage:'badge-bev'};
+
+    let rows = d.items.map((item, idx)=>`
+      <tr draggable="true" data-id="${item.id}" class="item-order-row">
+        <td><span class="drag-handle" title="Drag to reorder">⠿</span></td>
+        <td><span class="order-num-badge io-badge">${idx+1}</span></td>
+        <td style="font-weight:600">${item.name}</td>
+        <td style="font-weight:700;color:var(--acc)">₹${parseFloat(item.price).toFixed(0)}</td>
+        <td><span class="badge-type ${typeBadge[item.item_type]||'badge-veg'}">${typeLabel[item.item_type]||item.item_type}</span></td>
+        <td>
+          <span class="avail-dot ${item.is_available_dine_in?'avail-yes':'avail-no'}"></span>Dine-In&nbsp;&nbsp;
+          <span class="avail-dot ${item.is_available_takeaway?'avail-yes':'avail-no'}"></span>Takeaway
+        </td>
+      </tr>`).join('');
+
+    area.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="font-size:13px;color:var(--sub)">${d.items.length} items in <strong>${d.category.name}</strong></div>
+        <button class="save-order-btn" id="saveItemsOrderBtn" onclick="saveItemsOrder(${catId})">💾 Save Order</button>
+      </div>
+      <table class="drag-table" id="itemsOrderTable">
+        <thead>
+          <tr>
+            <th style="width:40px"></th>
+            <th style="width:60px">Order</th>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Type</th>
+            <th>Availability</th>
+          </tr>
+        </thead>
+        <tbody id="itemsOrderBody">${rows}</tbody>
+      </table>`;
+
+    initItemsDrag();
+  }catch(e){ area.innerHTML='<div class="items-order-loading">❌ Network error</div>'; }
+}
+
+function initItemsDrag(){
+  const tbody = document.getElementById('itemsOrderBody');
+  if(!tbody) return;
+  let dragging = null;
+
+  tbody.addEventListener('dragstart', function(e){
+    dragging = e.target.closest('tr[data-id]');
+    if(!dragging) return;
+    dragging.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  tbody.addEventListener('dragend', function(e){
+    if(dragging) dragging.classList.remove('dragging');
+    tbody.querySelectorAll('tr').forEach(r=>r.classList.remove('drag-over'));
+    dragging = null;
+    updateItemsOrderBadges();
+  });
+  tbody.addEventListener('dragover', function(e){
+    e.preventDefault();
+    const row = e.target.closest('tr[data-id]');
+    if(!row || row===dragging) return;
+    tbody.querySelectorAll('tr').forEach(r=>r.classList.remove('drag-over'));
+    row.classList.add('drag-over');
+    const rect = row.getBoundingClientRect();
+    if(e.clientY < rect.top + rect.height/2) tbody.insertBefore(dragging, row);
+    else tbody.insertBefore(dragging, row.nextSibling);
+  });
+  tbody.addEventListener('drop', function(e){ e.preventDefault(); });
+}
+
+function updateItemsOrderBadges(){
+  document.querySelectorAll('#itemsOrderBody tr[data-id]').forEach(function(row, idx){
+    const badge = row.querySelector('.io-badge');
+    if(badge) badge.textContent = idx + 1;
+  });
+}
+
+async function saveItemsOrder(catId){
+  const btn = document.getElementById('saveItemsOrderBtn');
+  if(!btn) return;
+  btn.disabled = true; btn.textContent = '⏳ Saving…';
+  const ids = Array.from(document.querySelectorAll('#itemsOrderBody tr[data-id]')).map(r=>parseInt(r.dataset.id));
+  try{
+    const r = await fetch('/manage/api/items/reorder/', {
+      method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},
+      body: JSON.stringify({ids})
+    });
+    const d = await r.json();
+    if(d.success){ toast('✅ Items order saved!'); updateItemsOrderBadges(); }
+    else toast(d.error||'Error saving order','err');
+  }catch(e){ toast('Network error','err'); }
+  btn.disabled = false; btn.innerHTML = '💾 Save Order';
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _delType=null,_delId=null;
+function confirmDel(type,id,name){
+  _delType=type;_delId=id;
+  document.getElementById('delName').textContent=name;
+  openModal('delModal');
+}
+document.getElementById('delConfirmBtn').onclick=async function(){
+  const url={
+    item:`/staff/items/${_delId}/delete/`,
+    category:`/manage/api/categories/${_delId}/delete/`,
+    combo:`/manage/api/combos/${_delId}/delete/`,
+    discount:`/manage/api/discounts/${_delId}/delete/`,
+    offer:`/manage/api/offers/${_delId}/delete/`,
+    co:`/manage/api/cart-offers/${_delId}/delete/`,
+    table:`/manage/api/tables/${_delId}/delete/`,
+  }[_delType];
+  if(!url)return;
+  try{
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf()},body:'{}'});
+    const d=await r.json();
+    if(d.success){
+      toast('🗑 Deleted');closeModal('delModal');
+      // Remove row or card
+      const row=document.getElementById(_delType+'row-'+_delId)||document.getElementById('icard-'+_delId)||document.getElementById('tablerow-'+_delId)||document.getElementById('discrow-'+_delId)||document.getElementById('comborow-'+_delId)||document.getElementById('catrow-'+_delId);
+      if(row)row.remove();
+    }else toast(d.error||'Error','err');
+  }catch(e){toast('Network error','err');}
+};
+</script>
+</body>
+</html>

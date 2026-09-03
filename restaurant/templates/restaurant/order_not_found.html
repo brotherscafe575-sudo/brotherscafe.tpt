@@ -1,0 +1,14 @@
+{% extends 'restaurant/base.html' %}
+{% block content %}
+<div style="max-width:420px;margin:60px auto;padding:32px 26px;background:white;border-radius:16px;
+            box-shadow:0 4px 20px rgba(0,0,0,.07);text-align:center;font-family:'Poppins',sans-serif;">
+  <div style="font-size:46px;margin-bottom:10px;">&#x1F512;</div>
+  <h2 style="font-size:19px;font-weight:800;color:#2c3e50;margin:0 0 8px;">This bill isn't available</h2>
+  <p style="font-size:13px;color:#888;line-height:1.55;margin:0 0 22px;">
+    You can only view an order placed from this device. If this is your order,
+    please log in with the phone number you used, or ask our staff for a printed bill.
+  </p>
+  <a href="/customer/home/" style="display:inline-block;background:#e74c3c;color:white;text-decoration:none;
+     padding:11px 26px;border-radius:22px;font-size:13px;font-weight:800;">My Orders</a>
+</div>
+{% endblock %}

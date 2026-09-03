@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Print Bill - {{ root_order.order_number }}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    background: white;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    width: 72mm;
+    margin: 0;
+    padding: 2px 2px 10px 2px;
+  }
+  /* Force all text black for thermal printing */
+  * { color: #000 !important; }
+  .center { text-align: center; }
+  .bold { font-weight: bold; }
+  .big { font-size: 15px; font-weight: bold; }
+  .dashed { border-top: 1px dashed #000; margin: 5px 0; }
+  .solid { border-top: 2px solid #000; margin: 5px 0; }
+  /* Thermal printer column layout — table is more reliable than flexbox
+     across different printer drivers and Windows spoolers. */
+  .row { display: table; width: 100%; padding: 2px 0; border-collapse: collapse; }
+  .row .name { display: table-cell; word-break: break-word; padding-right: 3px; }
+  .row .qty  { display: table-cell; width: 20px; text-align: center; white-space: nowrap; }
+  .row .price{ display: table-cell; width: 58px; text-align: right; white-space: nowrap; font-weight: bold; }
+  .total-row { display: table; width: 100%; font-weight: bold; font-size: 13px; padding: 3px 0; }
+  .total-row span:first-child { display: table-cell; }
+  .total-row span:last-child  { display: table-cell; text-align: right; white-space: nowrap; width: 64px; }
+  .thank { font-size: 11px; margin-top: 6px; }
+  .badge { display: inline-block; border: 1px solid #000; padding: 1px 6px; border-radius: 3px; font-size: 11px; margin: 2px 0; }
+  .tearline { text-align: center; font-size: 11px; letter-spacing: 1px; padding: 8px 0; margin: 10px 0; border-top: 1px dashed #000; border-bottom: 1px dashed #000; }
+  .kot { padding-top: 6px; }
+  @media print {
+    body { width: 72mm; margin: 0; padding: 0 2px; }
+    .no-print { display: none !important; }
+    @page { margin: 0; size: 80mm auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NO-PRINT CONTROLS -->
+<div class="no-print" style="background:#1a1a2e;color:white;padding:10px;text-align:center;margin-bottom:10px;border-radius:6px;">
+  <strong>🖨️ Thermal Print Preview</strong><br>
+  <small>Click <strong>Print</strong> to send to printer &nbsp;|&nbsp; Port: USB/Thermal</small><br>
+  <button onclick="window.print()" style="margin-top:8px;background:#27ae60;color:white;border:none;padding:8px 22px;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer;">🖨️ Print Now</button>
+  &nbsp;
+  <button onclick="window.close()" style="margin-top:8px;background:#e74c3c;color:white;border:none;padding:8px 16px;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer;">✕ Close</button>
+</div>
+
+<!-- ═══════════ CUSTOMER COPY ═══════════ -->
+<div id="copyCustomer">
+<!-- RECEIPT -->
+<div class="center">
+  <div class="big">☕ {{ shop.shop_name|default:"Brothers Cafe" }}</div>
+  {% if shop.address %}<div style="font-size:11px;">{{ shop.address }}</div>{% endif %}
+  {% if shop.location %}<div style="font-size:11px;">{{ shop.location }}</div>{% endif %}
+  {% if shop.phone %}<div style="font-size:11px;">Ph: {{ shop.phone }}</div>{% endif %}
+  {% if shop.gstin %}<div style="font-size:11px;">GSTIN: {{ shop.gstin }}</div>{% endif %}
+</div>
+
+<div class="dashed"></div>
+
+{% if shop.logo %}
+<div class="center" style="margin-bottom:4px;">
+  <img src="{{ shop.logo.url }}" alt="" style="width:64px;height:64px;object-fit:contain;">
+</div>
+{% endif %}
+<div class="center">
+  <div class="bold">BILL / RECEIPT</div>
+  {% if is_reorder_only %}<div class="bold" style="font-size:13px;margin-top:2px;">🔄 REORDER ITEMS ONLY</div>{% endif %}
+  <div>Order #{{ root_order.order_number }}</div>
+  <div style="font-size:11px;">{{ root_order.created_at|date:"d-m-Y H:i" }}</div>
+</div>
+
+<div class="dashed"></div>
+
+<div class="row">
+  <span class="bold">Customer:</span>
+  <span>{{ root_order.customer_name }}</span>
+</div>
+<div class="row">
+  <span class="bold">Phone:</span>
+  <span>{{ root_order.customer_phone }}</span>
+</div>
+{% if root_order.table %}
+<div class="row">
+  <span class="bold">Table:</span>
+  <span>{% if root_order.table %}Dine In{% else %}Takeaway{% endif %}</span>
+</div>
+{% else %}
+<div class="row">
+  <span class="bold">Type:</span>
+  <span>🏠 Takeaway</span>
+</div>
+{% endif %}
+
+<div class="dashed"></div>
+
+<!-- ITEMS HEADER -->
+<div class="row bold" style="border-bottom:1px solid #000;padding-bottom:3px;">
+  <span class="name">Item</span>
+  <span class="qty">Qty</span>
+  <span class="price">Amount</span>
+</div>
+
+{% if order_sections and has_reorders %}
+{# ── MULTI-ORDER BILL: one section per order ─────────────────────────── #}
+{% for section in order_sections %}
+{% if section.is_reorder %}
+<div class="dashed"></div>
+<div class="center bold" style="font-size:10px;letter-spacing:.5px;">-- EXTRA ORDER --</div>
+{% endif %}
+{% for item in section.items %}
+<div class="row">
+  <span class="name bold">{{ item.name }}{% if item.is_combo %} [COMBO]{% endif %}{% if item.is_free %} [FREE]{% endif %}{% if item.combo_items %}<br/><span style="font-size:9px;font-weight:normal;">{% for c in item.combo_items %}{{ c }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% elif item.notes %}<br/><span style="font-size:9px;font-weight:normal;">{{ item.notes }}</span>{% endif %}</span>
+  <span class="qty">{{ item.quantity }}</span>
+  <span class="price">&#x20B9;{{ item.total_price }}</span>
+</div>
+{% endfor %}
+{% if section.parcel > 0 %}
+<div class="row"><span class="name">  Parcel</span><span class="price">+&#x20B9;{{ section.parcel|floatformat:2 }}</span></div>
+{% endif %}
+{% if section.discount > 0 %}
+<div class="row"><span class="name">  &#x1F381; {% if section.offer_title %}{{ section.offer_title }}{% endif %}{% if section.discount_percent %} ({{ section.discount_percent|floatformat:0 }}%){% elif section.discount_is_flat %} (flat){% endif %}</span><span class="price">-&#x20B9;{{ section.discount|floatformat:2 }}</span></div>
+{% endif %}
+<div class="row bold"><span class="name">  {% if section.is_reorder %}Extra Order{% else %}Order{% endif %} Total</span><span class="price">&#x20B9;{{ section.section_total|floatformat:2 }}</span></div>
+{% endfor %}
+{% else %}
+{# ── SINGLE ORDER BILL ────────────────────────────────────────────────── #}
+{% for item in combined_items %}
+<div class="row">
+  <span class="name bold">{{ item.name }}{% if item.is_combo %} [COMBO]{% endif %}{% if item.is_free %} [FREE]{% endif %}{% if item.combo_items %}<br/><span style="font-size:9px;font-weight:normal;">{% for c in item.combo_items %}{{ c }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% elif item.notes %}<br/><span style="font-size:9px;font-weight:normal;">{{ item.notes }}</span>{% endif %}</span>
+  <span class="qty">{{ item.quantity }}</span>
+  <span class="price">&#x20B9;{{ item.total_price }}</span>
+</div>
+{% endfor %}
+{% if combined_parcel and combined_parcel > 0 %}
+<div class="row"><span class="name">Parcel Charge</span><span class="price">+&#x20B9;{{ combined_parcel|floatformat:2 }}</span></div>
+{% endif %}
+{% if discount_amount and discount_amount > 0 %}
+<div class="row"><span class="name">{% if offer_title %}&#x1F381; {{ offer_title }}{% if discount_percent %} ({{ discount_percent|floatformat:0 }}%){% elif discount_is_flat %} (flat){% endif %}{% elif discount_percent %}Discount ({{ discount_percent|floatformat:0 }}%){% else %}Discount{% endif %}</span><span class="price">-&#x20B9;{{ discount_amount|floatformat:2 }}</span></div>
+{% endif %}
+{% endif %}
+
+<div class="dashed"></div>
+<div class="row"><span class="name">Subtotal</span><span class="price">&#x20B9;{{ combined_subtotal|floatformat:2 }}</span></div>
+{% if discount_amount and discount_amount > 0 and has_reorders %}
+<div class="row"><span class="name">Total Discounts</span><span class="price">-&#x20B9;{{ discount_amount|floatformat:2 }}</span></div>
+{% endif %}
+
+<div class="solid"></div>
+<div class="total-row">
+  <span>TOTAL</span>
+  <span>&#x20B9;{{ combined_total|floatformat:2 }}</span>
+</div>
+<div class="solid"></div>
+
+<!-- PAYMENT (shown only when paid) -->
+{% if order.payment_status == 'paid_offline' or order.payment_status == 'paid_online' %}
+<div class="row" style="margin-top:4px;">
+  <span class="bold">Payment:</span>
+  <span>
+    {% if order.payment_status == 'paid_offline' %}💵 Cash / Counter
+    {% else %}📱 UPI / Online
+    {% endif %}
+  </span>
+</div>
+{% endif %}
+
+{% if all_orders|length > 1 %}
+<div class="dashed"></div>
+<div class="center" style="font-size:11px;">
+  <div class="bold">Order Breakdown</div>
+  {% for o in all_orders %}
+  <div>{{ o.order_number }}{% if o.parent_order %} (Reorder){% endif %}: ₹{{ o.total_amount }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="dashed"></div>
+
+<div class="center thank">
+  <div class="bold">Thank You!</div>
+  <div>Visit Again 😊</div>
+  <div style="font-size:10px;margin-top:4px;">Brothers Cafe · Powered by ☕</div>
+</div>
+<div style="height:26px;"></div><!-- feed space before cut -->
+</div><!-- /copyCustomer -->
+
+<!-- ═══════════ STAFF / KITCHEN COPY (no prices) — printed as a SEPARATE job so the printer cuts between copies ═══════════ -->
+<div class="kot" id="copyStaff">
+  <div class="center">
+    <div class="big">☕ {{ shop.shop_name|default:"Brothers Cafe" }}</div>
+    <div class="bold" style="font-size:14px;margin-top:3px;">*** STAFF COPY / KOT ***</div>
+    {% if is_reorder_only %}<div class="bold" style="font-size:12px;margin-top:2px;">🔄 REORDER ITEMS ONLY</div>{% endif %}
+  </div>
+
+  <div class="dashed"></div>
+
+  <div class="center">
+    <div class="bold big">Order #{{ root_order.order_number }}</div>
+    <div style="font-size:11px;">{{ root_order.created_at|date:"d-m-Y H:i" }}</div>
+  </div>
+
+  <div class="dashed"></div>
+
+  <div class="row">
+    <span class="bold">Table:</span>
+    <span class="bold">{% if root_order.table %}{{ root_order.table.name }} (#{{ root_order.table.number }}){% else %}🏠 TAKEAWAY{% endif %}</span>
+  </div>
+  <div class="row">
+    <span class="bold">Customer:</span>
+    <span>{{ root_order.customer_name }}</span>
+  </div>
+
+  <div class="dashed"></div>
+
+  <!-- ITEMS — QTY + NAME ONLY, NO PRICES -->
+  <div class="row bold" style="border-bottom:1px solid #000;padding-bottom:3px;">
+    <span class="qty" style="width:36px;text-align:left;">Qty</span>
+    <span class="name">Item</span>
+  </div>
+
+  {% if order_sections and has_reorders %}
+  {% for section in order_sections %}
+  {% if section.is_reorder %}
+  <div class="row" style="font-size:11px;padding:3px 0;letter-spacing:.5px;border-top:1px dashed #000;margin-top:2px;">
+    <span class="name bold">-- EXTRA ORDER --</span>
+  </div>
+  {% endif %}
+  {% for item in section.items %}
+  <div class="row" style="font-size:14px;padding:3px 0;">
+    <span class="qty bold" style="width:36px;text-align:left;">{{ item.quantity }}×</span>
+    <span class="name bold">{{ item.name }}{% if item.is_combo %} [COMBO]{% endif %}{% if item.is_free %} [FREE]{% endif %}{% if item.notes and not item.combo_items %}<br/><span style="font-size:9px;font-weight:normal;">{{ item.notes }}</span>{% endif %}</span>
+  </div>
+  {% if item.combo_items %}
+  {% for c in item.combo_items %}
+  <div class="row" style="font-size:13px;padding:1px 0 1px 0;">
+    <span class="qty bold" style="width:36px;text-align:right;padding-right:8px;">└</span>
+    <span class="name bold">{{ c }}</span>
+  </div>
+  {% endfor %}
+  {% endif %}
+  {% endfor %}
+  {% endfor %}
+  {% else %}
+  {% for item in combined_items %}
+  <div class="row" style="font-size:14px;padding:3px 0;">
+    <span class="qty bold" style="width:36px;text-align:left;">{{ item.quantity }}×</span>
+    <span class="name bold">{{ item.name }}{% if item.is_combo %} [COMBO]{% endif %}{% if item.is_free %} [FREE]{% endif %}{% if item.notes and not item.combo_items %}<br/><span style="font-size:9px;font-weight:normal;">{{ item.notes }}</span>{% endif %}</span>
+  </div>
+  {% if item.combo_items %}
+  {% for c in item.combo_items %}
+  <div class="row" style="font-size:13px;padding:1px 0 1px 0;">
+    <span class="qty bold" style="width:36px;text-align:right;padding-right:8px;">└</span>
+    <span class="name bold">{{ c }}</span>
+  </div>
+  {% endfor %}
+  {% endif %}
+  {% endfor %}
+  {% endif %}
+
+  <div class="solid"></div>
+  <div class="center bold">Total Items: {{ combined_items|length }}</div>
+  <div class="solid"></div>
+  <div style="height:38px;"></div><!-- paper feed space for tearing -->
+</div>
+
+<script>
+  // ── DIRECT PRINT (?auto=1) — TWO SEPARATE PRINT JOBS ───────────
+  // Job 1: CUSTOMER copy → printer cuts at end of job
+  // Job 2: STAFF copy    → printer cuts at end of job
+  // Works with the printer's normal "cut at end of document" setting.
+  // TIP: launch the browser with --kiosk-printing (START_BILLING.bat)
+  //      and set POS80 as default printer for zero-dialog printing.
+  var isAuto = new URLSearchParams(window.location.search).get('auto') === '1';
+  var custEl, staffEl;
+  var stage = 0;           // 0 = print customer, 1 = print staff, 2 = done
+  var advanced = false;    // guard so onafterprint + fallback don't double-fire
+
+  function showOnly(which) {
+    custEl.style.display  = (which === 'customer') ? 'block' : 'none';
+    staffEl.style.display = (which === 'staff')    ? 'block' : 'none';
+  }
+
+  function runStage() {
+    advanced = false;
+    if (stage === 0) {
+      showOnly('customer');
+      window.focus();
+      window.print();                      // JOB 1 → cut
+      setTimeout(function(){ advance(); }, 2200);   // fallback
+    } else if (stage === 1) {
+      showOnly('staff');
+      window.focus();
+      window.print();                      // JOB 2 → cut
+      setTimeout(function(){ advance(); }, 2200);   // fallback
+    } else {
+      window.close();
+    }
+  }
+
+  function advance() {
+    if (advanced) return;                  // already moved on
+    advanced = true;
+    stage++;
+    setTimeout(runStage, 450);             // small gap between jobs
+  }
+
+  window.onload = function() {
+    custEl  = document.getElementById('copyCustomer');
+    staffEl = document.getElementById('copyStaff');
+    if (isAuto) {
+      var ctrl = document.querySelector('.no-print');
+      if (ctrl) ctrl.style.display = 'none';
+      setTimeout(runStage, 350);
+    }
+  };
+
+  // Fires as soon as each print job is sent (fast path in kiosk mode)
+  window.onafterprint = function() {
+    if (isAuto) advance();
+  };
+</script>
+</body>
+</html>
